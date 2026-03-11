@@ -1,0 +1,14 @@
+{
+  "skills": {
+    "load": {
+      "watch": true
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true
+      }
+    }
+  }
+}
