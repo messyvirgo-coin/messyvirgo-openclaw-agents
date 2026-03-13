@@ -15,23 +15,47 @@ It does not own:
 - secure deployment wrapper concerns (Docker hardening, image build wrappers)
 - the legacy `messyvirgo-skills` repo (left unchanged for now)
 
-## Quick Start
+## Official Install Docs
 
-Install team profile `mv-t1` into a secure-wrapper deployment:
+Use the client repository as the canonical operator guide:
+
+- Linux: [`messyvirgo-openclaw-client/docs/INSTALL-linux.md`](https://github.com/messyvirgo-coin/messyvirgo-openclaw-client/blob/main/docs/INSTALL-linux.md)
+- macOS: [`messyvirgo-openclaw-client/docs/INSTALL-macos.md`](https://github.com/messyvirgo-coin/messyvirgo-openclaw-client/blob/main/docs/INSTALL-macos.md)
+
+Those docs cover:
+
+- secure client setup
+- `.env` preparation
+- device/browser pairing
+- optional Messy Virgo agent installation
+- Telegram channel registration and pairing
+
+## Pack Install
+
+After the client is installed and configured, install profile `mv-t1` from this repo:
 
 ```bash
+set -a
+source ../messyvirgo-openclaw-client/.env
+set +a
+export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
+export MESSY_VIRGO_API_KEY="your-api-key"
 ./scripts/install.sh --target wrapper --profile mv-t1
 ```
 
-Install into a plain OpenClaw deployment:
+Restart the wrapper after install/update so runtime files are reloaded:
 
 ```bash
-./scripts/install.sh --target openclaw --profile mv-t1
+cd ../messyvirgo-openclaw-client
+./scripts/down.sh
+./scripts/up.sh
 ```
 
 Update managed files in place:
 
 ```bash
+export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
+export MESSY_VIRGO_API_KEY="your-api-key"
 ./scripts/update.sh --target wrapper --profile mv-t1
 ```
 
@@ -41,8 +65,78 @@ Remove only pack-managed files:
 ./scripts/remove.sh --target wrapper --profile mv-t1
 ```
 
-Configure Telegram and bind to a profile agent:
+Install into a plain OpenClaw deployment:
 
 ```bash
-./scripts/setup-agent-channel.sh --target wrapper --agent mv-t1-mngr --channel telegram
+./scripts/install.sh --target openclaw --profile mv-t1
 ```
+
+## Plain OpenClaw
+
+If you are not using the Messy Virgo wrapper client and instead run plain
+OpenClaw directly, use this repo as a pack overlay on top of your existing
+OpenClaw instance.
+
+Install into a plain OpenClaw target:
+
+```bash
+export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
+export MESSY_VIRGO_API_KEY="your-api-key"
+./scripts/install.sh --target openclaw --profile mv-t1
+```
+
+Update later:
+
+```bash
+export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
+export MESSY_VIRGO_API_KEY="your-api-key"
+./scripts/update.sh --target openclaw --profile mv-t1
+```
+
+Remove only pack-managed files:
+
+```bash
+./scripts/remove.sh --target openclaw
+```
+
+In plain OpenClaw mode, target paths default to:
+
+- config: `~/.openclaw`
+- workspaces: `~/.openclaw/workspaces`
+
+For channels, bindings, and pairing, use the plain OpenClaw CLI directly:
+
+```bash
+openclaw channels add --channel telegram --token "$TELEGRAM_BOT_TOKEN"
+openclaw agents bind --agent mv-t1-mngr --bind telegram
+openclaw pairing list --channel telegram
+openclaw pairing approve telegram <CODE> --notify
+```
+
+## Post-Install: Assign Models Per Agent
+
+This pack no longer ships provider/model catalog fragments. After install/update,
+assign the desired model to each `mv-t1-*` agent in the OpenClaw dashboard
+Agent settings.
+
+If you do not assign a model per agent, agents use the runtime default model
+configured in the target OpenClaw instance.
+
+## MCP Runtime Values (Funds Agent)
+
+`mv-t1-funds` uses MCP runtime values from environment variables:
+
+- `MESSY_VIRGO_MCP_URL`
+- `MESSY_VIRGO_API_KEY`
+
+Set them in your shell (or wrapper `.env`) before running install/update.
+These values are rendered into managed `mcporter.json` during pack install/update.
+
+Use the dashboard for agent model selection, but keep MCP runtime credentials in
+environment variables.
+
+## Notes
+
+- This pack does not force a default agent in the target instance.
+- For Telegram registration, bindings, and pairing, follow the official client install docs above.
+- More pack-specific operational examples live in `docs/OPERATIONS.md`.

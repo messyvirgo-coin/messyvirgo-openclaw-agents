@@ -98,7 +98,7 @@ run_cli() {
 
 build_channel_add_args() {
   local args=()
-  args+=("channels" "add" "$CHANNEL")
+  args+=("channels" "add" "--channel" "$CHANNEL")
   if [[ "$USE_ENV" == "1" ]]; then
     args+=("--use-env")
   elif [[ -n "$TOKEN" ]]; then

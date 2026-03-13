@@ -3,11 +3,9 @@
     "list": [
       {
         "id": "mv-t1-mngr",
-        "default": true,
         "name": "Messy Virgo T1 Manager",
         "identity": { "name": "Messy Virgo T1 Manager" },
         "workspace": "/home/node/workspaces/mv-t1-mngr",
-        "model": "bankr/qwen3-coder",
         "subagents": {
           "allowAgents": [
             "mv-t1-coder",
@@ -22,7 +20,6 @@
         "name": "Messy Virgo T1 Coder",
         "identity": { "name": "Messy Virgo T1 Coder" },
         "workspace": "/home/node/workspaces/mv-t1-coder",
-        "model": "bankr/qwen3-coder",
         "subagents": {
           "thinking": "medium"
         }
@@ -32,7 +29,6 @@
         "name": "Messy Virgo T1 Researcher",
         "identity": { "name": "Messy Virgo T1 Researcher" },
         "workspace": "/home/node/workspaces/mv-t1-researcher",
-        "model": "bankr/gemini-2.5-flash",
         "subagents": {
           "thinking": "high"
         }
@@ -42,7 +38,6 @@
         "name": "Messy Virgo T1 Planner",
         "identity": { "name": "Messy Virgo T1 Planner" },
         "workspace": "/home/node/workspaces/mv-t1-planner",
-        "model": "bankr/kimi-k2.5",
         "subagents": {
           "thinking": "high"
         }
@@ -52,7 +47,6 @@
         "name": "Messy Virgo T1 Funds Manager",
         "identity": { "name": "Messy Virgo T1 Funds Manager" },
         "workspace": "/home/node/workspaces/mv-t1-funds",
-        "model": "bankr/qwen3-coder",
         "tools": {
           "allow": [
             "read",

@@ -88,7 +88,37 @@ fi
 
 runtime_mcporter="$PROFILE_ROOT/runtime/mcporter.json"
 if [[ -f "$runtime_mcporter" ]]; then
-  safe_sync_template_file "$runtime_mcporter" "$CONFIG_DIR/mcporter.json" "$SYNC" "$TS"
+  rendered_mcporter="$(mktemp)"
+  python3 - "$runtime_mcporter" "$rendered_mcporter" <<'PY'
+import os
+import re
+import sys
+from pathlib import Path
+
+src = Path(sys.argv[1])
+dst = Path(sys.argv[2])
+raw = src.read_text()
+
+pattern = re.compile(r"\$\{([A-Z0-9_]+)\}")
+required = sorted(set(pattern.findall(raw)))
+
+missing = [name for name in required if os.environ.get(name, "") == ""]
+if missing:
+    print(
+        "ERROR: Missing required environment variables for runtime template: "
+        + ", ".join(missing),
+        file=sys.stderr,
+    )
+    sys.exit(2)
+
+rendered = raw
+for name in required:
+    rendered = rendered.replace("${" + name + "}", os.environ[name])
+
+dst.write_text(rendered)
+PY
+  safe_sync_template_file "$rendered_mcporter" "$CONFIG_DIR/mcporter.json" "$SYNC" "$TS"
+  rm -f "$rendered_mcporter"
 fi
 
 render_managed_pack_config "$PROFILE" "$CONFIG_DIR" "$MANAGED_ENTRY_PATH"
