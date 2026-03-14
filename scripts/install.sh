@@ -119,6 +119,7 @@ dst.write_text(rendered)
 PY
   safe_sync_template_file "$rendered_mcporter" "$CONFIG_DIR/mcporter.json" "$SYNC" "$TS"
   rm -f "$rendered_mcporter"
+  info "Rendered MCP runtime config: $CONFIG_DIR/mcporter.json"
 fi
 
 render_managed_pack_config "$PROFILE" "$CONFIG_DIR" "$MANAGED_ENTRY_PATH"
