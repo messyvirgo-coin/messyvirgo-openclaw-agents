@@ -131,6 +131,9 @@ configured in the target OpenClaw instance.
 
 Set them in your shell (or wrapper `.env`) before running install/update.
 These values are rendered into managed `mcporter.json` during pack install/update.
+For wrapper installs, this is a single global runtime config at
+`$OPENCLAW_CONFIG_DIR/mcporter.json` (default: `~/.openclaw-secure/mcporter.json`);
+per-workspace `config/mcporter.json` files are not required.
 
 Use the dashboard for agent model selection, but keep MCP runtime credentials in
 environment variables.
@@ -140,3 +143,27 @@ environment variables.
 - This pack does not force a default agent in the target instance.
 - For Telegram registration, bindings, and pairing, follow the official client install docs above.
 - More pack-specific operational examples live in `docs/OPERATIONS.md`.
+
+## Public Repo Safety
+
+Do not post secrets, tokens, private links, personal data, or confidential
+information in issues or pull requests.
+
+If you suspect a vulnerability or accidental disclosure, report privately to
+`contact@messyvirgo.com` (do not open a public security issue).
+
+## License
+
+Apache-2.0. See [LICENSE](./LICENSE).
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## Security
+
+See [SECURITY.md](./SECURITY.md).
+
+## Support
+
+See [SUPPORT.md](./SUPPORT.md).
