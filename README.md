@@ -45,11 +45,16 @@ Legacy `profiles/` content is retained only for migration context and is no long
 After the client is installed and configured, install this pack from this repo:
 
 ```bash
+## Option A: wrapper installed on same machine
 set -a
 source ../messyvirgo-openclaw-client/.env
 set +a
+
+## Option B: export directly in current shell
 export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
 export MESSY_VIRGO_API_KEY="your-api-key"
+
+## Install
 ./scripts/install.sh --target wrapper
 ```
 
@@ -70,8 +75,7 @@ cd ../messyvirgo-openclaw-client
 Update managed files in place:
 
 ```bash
-export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
-export MESSY_VIRGO_API_KEY="your-api-key"
+# load env first (Option A or B above), then:
 ./scripts/update.sh --target wrapper
 ```
 

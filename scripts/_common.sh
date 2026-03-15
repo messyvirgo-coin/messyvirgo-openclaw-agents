@@ -35,6 +35,22 @@ resolve_target_paths() {
   esac
 }
 
+runtime_config_dir_for_target() {
+  local target="$1"
+  local host_config_dir="$2"
+  case "$target" in
+    wrapper)
+      echo "/home/node/.openclaw"
+      ;;
+    openclaw)
+      echo "$host_config_dir"
+      ;;
+    *)
+      die "Unknown target '$target' (expected wrapper|openclaw)"
+      ;;
+  esac
+}
+
 managed_root_for_config() {
   local config_dir="$1"
   echo "$config_dir/$PACK_MANAGED_ROOT"

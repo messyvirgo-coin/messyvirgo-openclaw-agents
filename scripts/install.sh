@@ -61,6 +61,9 @@ TS="$(date +%Y%m%d-%H%M%S)"
 MANAGED_ROOT="$(managed_root_for_config "$CONFIG_DIR")"
 SHARED_DIR="$MANAGED_ROOT/shared"
 SHARED_SKILLS_DIR="$SHARED_DIR/skills"
+RUNTIME_CONFIG_DIR="$(runtime_config_dir_for_target "$TARGET" "$CONFIG_DIR")"
+RUNTIME_MANAGED_ROOT="$(managed_root_for_config "$RUNTIME_CONFIG_DIR")"
+SHARED_SKILLS_RUNTIME_DIR="$RUNTIME_MANAGED_ROOT/shared/skills"
 SHARED_ENTRY_REL="$(shared_entry_rel_for_pack)"
 SHARED_ENTRY_PATH="$CONFIG_DIR/$SHARED_ENTRY_REL"
 SHARED_MANIFEST_PATH="$(shared_manifest_path_for_config "$CONFIG_DIR")"
@@ -172,7 +175,7 @@ PY
   info "Rendered MCP runtime config: $CONFIG_DIR/mcporter.json"
 fi
 
-render_shared_pack_config "$RUNTIME_FRAGMENT_DIR" "$SHARED_ENTRY_PATH" "$SHARED_SKILLS_DIR"
+render_shared_pack_config "$RUNTIME_FRAGMENT_DIR" "$SHARED_ENTRY_PATH" "$SHARED_SKILLS_RUNTIME_DIR"
 render_agents_pack_config "$AGENTS_REGISTRY" "$BUNDLE_ENTRY_PATH" "$selected_ids_csv"
 ensure_root_include_hook "$CONFIG_DIR" "$SHARED_ENTRY_REL"
 ensure_root_include_hook "$CONFIG_DIR" "$BUNDLE_ENTRY_REL"
