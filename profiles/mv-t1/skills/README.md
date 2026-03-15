@@ -1,5 +1,5 @@
-# `mv-t1` skills
+# Legacy `mv-t1` skills
 
-Place active OpenClaw skill packages for `mv-t1` under this directory.
+This directory is deprecated.
 
-Each skill should be a subdirectory with at least `SKILL.md`.
+Use top-level `skills/` for canonical global skill packages.

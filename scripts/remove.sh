@@ -7,10 +7,12 @@ source "$SCRIPT_DIR/_common.sh"
 
 TARGET="wrapper"
 PURGE_STATE=0
+BUNDLE=""
+PROFILE=""
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/remove.sh [--target wrapper|openclaw] [--purge-state]
+Usage: ./scripts/remove.sh [--target wrapper|openclaw] [--bundle <name>] [--purge-state]
 
 Removes files managed by this pack. Stateful workspace files are preserved unless
 --purge-state is explicitly set.
@@ -21,6 +23,14 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --target)
       TARGET="${2:-}"
+      shift 2
+      ;;
+    --bundle)
+      BUNDLE="${2:-}"
+      shift 2
+      ;;
+    --profile)
+      PROFILE="${2:-}"
       shift 2
       ;;
     --purge-state)
@@ -37,11 +47,23 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-resolve_target_paths "$TARGET"
-MANIFEST_PATH="$(manifest_path_for_config "$CONFIG_DIR")"
-[[ -f "$MANIFEST_PATH" ]] || die "Manifest not found at $MANIFEST_PATH"
+if [[ -n "$PROFILE" ]]; then
+  if [[ -n "$BUNDLE" && "$BUNDLE" != "$PROFILE" ]]; then
+    die "Use either --bundle or --profile (deprecated alias), not both"
+  fi
+  BUNDLE="$PROFILE"
+fi
 
-python3 - "$MANIFEST_PATH" "$PURGE_STATE" "$CONFIG_DIR/openclaw.json" <<'PY'
+resolve_target_paths "$TARGET"
+
+SHARED_MANIFEST_PATH="$(shared_manifest_path_for_config "$CONFIG_DIR")"
+BUNDLES_MANIFEST_DIR="$CONFIG_DIR/$PACK_MANAGED_ROOT/manifests"
+ROOT_CONFIG_PATH="$CONFIG_DIR/openclaw.json"
+
+remove_manifest() {
+  local manifest_path="$1"
+  [[ -f "$manifest_path" ]] || return 0
+  python3 - "$manifest_path" "$PURGE_STATE" "$ROOT_CONFIG_PATH" <<'PY'
 import json
 import pathlib
 import sys
@@ -82,19 +104,44 @@ if managed_rel and root_config_path.exists():
         if changed:
             root_config_path.write_text(json.dumps(root_cfg, indent=2) + "\n")
 
-managed_root = manifest_path.parent
-if managed_root.exists():
-    # Remove empty directories only.
-    for d in sorted(managed_root.rglob("*"), reverse=True):
-        if d.is_dir():
-            try:
-                d.rmdir()
-            except OSError:
-                pass
-    try:
-        managed_root.rmdir()
-    except OSError:
-        pass
+if manifest_path.exists():
+    manifest_path.unlink()
 PY
+}
 
-info "Pack-managed files removed from target '$TARGET'."
+if [[ -n "$BUNDLE" ]]; then
+  bundle_key="$(sanitize_bundle_key "$BUNDLE")"
+  bundle_manifest_path="$(bundle_manifest_path_for_config "$CONFIG_DIR" "$bundle_key")"
+  [[ -f "$bundle_manifest_path" ]] || die "Bundle manifest not found: $bundle_manifest_path"
+  remove_manifest "$bundle_manifest_path"
+  info "Bundle '$BUNDLE' removed from target '$TARGET'. Shared assets were left intact."
+else
+  if [[ -d "$BUNDLES_MANIFEST_DIR" ]]; then
+    for manifest in "$BUNDLES_MANIFEST_DIR"/*.json; do
+      [[ -f "$manifest" ]] || continue
+      remove_manifest "$manifest"
+    done
+  fi
+  remove_manifest "$SHARED_MANIFEST_PATH"
+  info "All pack-managed files removed from target '$TARGET'."
+fi
+
+python3 - "$CONFIG_DIR/$PACK_MANAGED_ROOT" <<'PY'
+import pathlib
+import sys
+
+managed_root = pathlib.Path(sys.argv[1])
+if not managed_root.exists():
+    sys.exit(0)
+
+for d in sorted(managed_root.rglob("*"), reverse=True):
+    if d.is_dir():
+        try:
+            d.rmdir()
+        except OSError:
+            pass
+try:
+    managed_root.rmdir()
+except OSError:
+    pass
+PY
