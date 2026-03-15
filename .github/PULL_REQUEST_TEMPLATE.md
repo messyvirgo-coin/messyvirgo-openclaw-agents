@@ -7,7 +7,7 @@
 
 ## What changed
 
-- Summarize the key changes (profiles, templates, scripts, docs, config fragments, etc.).
+- Summarize the key changes (agents, bundles, runtime, skills, scripts, docs, config fragments, etc.).
 - Note any behavior changes for operators/users.
 
 ## How to test
@@ -18,8 +18,8 @@
 Example:
 
 ```bash
-./scripts/install.sh --target wrapper --profile mv-t1
-./scripts/update.sh --target wrapper --profile mv-t1
+./scripts/install.sh --target wrapper
+./scripts/update.sh --target wrapper
 ```
 
 ## Checklist

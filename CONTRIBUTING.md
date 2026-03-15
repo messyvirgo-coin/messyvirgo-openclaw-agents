@@ -21,7 +21,7 @@ Contributions are welcome, but please note:
 
 - Bug fixes and improvements in `scripts/`
 - Documentation improvements in `README.md` and `docs/`
-- Profile/template quality improvements under `profiles/`
+- Agent/runtime quality improvements under `agents/`, `runtime/`, `skills/`, and `bundles/`
 - Safer defaults and better operator ergonomics that do not break existing flows
 
 ## Contribution boundaries (important)

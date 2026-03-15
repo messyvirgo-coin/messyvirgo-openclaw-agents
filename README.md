@@ -1,12 +1,13 @@
 # Messy Virgo OpenClaw Agents Pack
 
-This repository is the source of truth for Messy Virgo agent packs.
+This repository is the source of truth for Messy Virgo OpenClaw runtime assets and agents.
 
 It owns:
 
-- team-scoped agent workspace templates (for example `mv-t1-*`)
-- active skills used by those agents
-- pack-managed OpenClaw config fragments
+- global skill packages loaded for the whole OpenClaw instance
+- global runtime config fragments and `mcporter.json` template
+- reusable agent workspace templates and metadata
+- optional agent bundles for selective deployment
 - install/update/remove scripts for both secure-wrapper and plain OpenClaw targets
 
 It does not own:
@@ -30,17 +31,37 @@ Those docs cover:
 - optional Messy Virgo agent installation
 - Telegram channel registration and pairing
 
+## Source Layout
+
+- `skills/`: global skills loaded instance-wide
+- `runtime/`: global OpenClaw runtime fragments and `mcporter.json` template
+- `agents/`: reusable agent definitions (`registry.json`) and workspace templates
+- `bundles/`: optional agent-only deployment selectors
+
+Legacy `profiles/` content is retained only for migration context and is no longer canonical.
+
 ## Pack Install
 
-After the client is installed and configured, install profile `mv-t1` from this repo:
+After the client is installed and configured, install this pack from this repo:
 
 ```bash
+## Option A: wrapper installed on same machine
 set -a
 source ../messyvirgo-openclaw-client/.env
 set +a
+
+## Option B: export directly in current shell
 export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
 export MESSY_VIRGO_API_KEY="your-api-key"
-./scripts/install.sh --target wrapper --profile mv-t1
+
+## Install
+./scripts/install.sh --target wrapper
+```
+
+Install only a selected bundle:
+
+```bash
+./scripts/install.sh --target wrapper --bundle mv-t1
 ```
 
 Restart the wrapper after install/update so runtime files are reloaded:
@@ -54,21 +75,32 @@ cd ../messyvirgo-openclaw-client
 Update managed files in place:
 
 ```bash
-export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
-export MESSY_VIRGO_API_KEY="your-api-key"
-./scripts/update.sh --target wrapper --profile mv-t1
+# load env first (Option A or B above), then:
+./scripts/update.sh --target wrapper
+```
+
+Update only a selected bundle:
+
+```bash
+./scripts/update.sh --target wrapper --bundle mv-t1
 ```
 
 Remove only pack-managed files:
 
 ```bash
-./scripts/remove.sh --target wrapper --profile mv-t1
+./scripts/remove.sh --target wrapper
+```
+
+Remove one bundle while keeping shared global assets:
+
+```bash
+./scripts/remove.sh --target wrapper --bundle mv-t1
 ```
 
 Install into a plain OpenClaw deployment:
 
 ```bash
-./scripts/install.sh --target openclaw --profile mv-t1
+./scripts/install.sh --target openclaw
 ```
 
 ## Plain OpenClaw
@@ -82,7 +114,7 @@ Install into a plain OpenClaw target:
 ```bash
 export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
 export MESSY_VIRGO_API_KEY="your-api-key"
-./scripts/install.sh --target openclaw --profile mv-t1
+./scripts/install.sh --target openclaw
 ```
 
 Update later:
@@ -90,13 +122,19 @@ Update later:
 ```bash
 export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
 export MESSY_VIRGO_API_KEY="your-api-key"
-./scripts/update.sh --target openclaw --profile mv-t1
+./scripts/update.sh --target openclaw
 ```
 
-Remove only pack-managed files:
+Remove pack-managed files:
 
 ```bash
 ./scripts/remove.sh --target openclaw
+```
+
+Remove one bundle while keeping shared global assets:
+
+```bash
+./scripts/remove.sh --target openclaw --bundle mv-t1
 ```
 
 In plain OpenClaw mode, target paths default to:
@@ -115,9 +153,7 @@ openclaw pairing approve telegram <CODE> --notify
 
 ## Post-Install: Assign Models Per Agent
 
-This pack no longer ships provider/model catalog fragments. After install/update,
-assign the desired model to each `mv-t1-*` agent in the OpenClaw dashboard
-Agent settings.
+This pack no longer ships provider/model catalog fragments. After install/update, assign the desired model to each managed agent in the OpenClaw dashboard Agent settings.
 
 If you do not assign a model per agent, agents use the runtime default model
 configured in the target OpenClaw instance.

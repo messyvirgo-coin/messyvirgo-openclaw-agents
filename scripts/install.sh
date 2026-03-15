@@ -6,14 +6,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/_common.sh"
 
 TARGET="wrapper"
-PROFILE="mv-t1"
+BUNDLE=""
+PROFILE=""
 SYNC=0
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/install.sh [--target wrapper|openclaw] [--profile mv-t1] [--sync]
+Usage: ./scripts/install.sh [--target wrapper|openclaw] [--bundle <name>] [--sync]
 
-Installs a Messy Virgo agent pack profile into a target OpenClaw instance.
+Installs shared runtime assets and agent workspace templates into a target OpenClaw instance.
+Defaults to all agents when --bundle is not provided.
 EOF
 }
 
@@ -21,6 +23,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --target)
       TARGET="${2:-}"
+      shift 2
+      ;;
+    --bundle)
+      BUNDLE="${2:-}"
       shift 2
       ;;
     --profile)
@@ -41,52 +47,99 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-PROFILE_ROOT="$ROOT_DIR/profiles/$PROFILE"
-[[ -d "$PROFILE_ROOT" ]] || die "Profile not found: $PROFILE"
+if [[ -n "$PROFILE" ]]; then
+  if [[ -n "$BUNDLE" && "$BUNDLE" != "$PROFILE" ]]; then
+    die "Use either --bundle or --profile (deprecated alias), not both"
+  fi
+  BUNDLE="$PROFILE"
+fi
 
 resolve_target_paths "$TARGET"
 ensure_dirs
 TS="$(date +%Y%m%d-%H%M%S)"
 
 MANAGED_ROOT="$(managed_root_for_config "$CONFIG_DIR")"
-MANAGED_ENTRY_REL="$PACK_MANAGED_ROOT/generated-$PROFILE.json"
-MANAGED_ENTRY_PATH="$CONFIG_DIR/$MANAGED_ENTRY_REL"
-MANIFEST_PATH="$(manifest_path_for_config "$CONFIG_DIR")"
+SHARED_DIR="$MANAGED_ROOT/shared"
+SHARED_SKILLS_DIR="$SHARED_DIR/skills"
+RUNTIME_CONFIG_DIR="$(runtime_config_dir_for_target "$TARGET" "$CONFIG_DIR")"
+RUNTIME_MANAGED_ROOT="$(managed_root_for_config "$RUNTIME_CONFIG_DIR")"
+SHARED_SKILLS_RUNTIME_DIR="$RUNTIME_MANAGED_ROOT/shared/skills"
+SHARED_ENTRY_REL="$(shared_entry_rel_for_pack)"
+SHARED_ENTRY_PATH="$CONFIG_DIR/$SHARED_ENTRY_REL"
+SHARED_MANIFEST_PATH="$(shared_manifest_path_for_config "$CONFIG_DIR")"
+
+BUNDLE_NAME="${BUNDLE:-all}"
+BUNDLE_KEY="$(sanitize_bundle_key "$BUNDLE_NAME")"
+BUNDLE_ENTRY_REL="$(bundle_entry_rel_for_pack "$BUNDLE_KEY")"
+BUNDLE_ENTRY_PATH="$CONFIG_DIR/$BUNDLE_ENTRY_REL"
+BUNDLE_MANIFEST_PATH="$(bundle_manifest_path_for_config "$CONFIG_DIR" "$BUNDLE_KEY")"
+
+RUNTIME_FRAGMENT_DIR="$ROOT_DIR/runtime/config-fragments"
+RUNTIME_MCPORTER="$ROOT_DIR/runtime/mcporter.json"
+AGENTS_REGISTRY="$ROOT_DIR/agents/registry.json"
+AGENTS_ROOT="$ROOT_DIR/agents"
+BUNDLES_ROOT="$ROOT_DIR/bundles"
+SKILLS_SOURCE_DIR="$ROOT_DIR/skills"
+
+[[ -d "$RUNTIME_FRAGMENT_DIR" ]] || die "Missing runtime fragments directory: $RUNTIME_FRAGMENT_DIR"
+[[ -f "$AGENTS_REGISTRY" ]] || die "Missing agents registry: $AGENTS_REGISTRY"
 
 mkdir -p "$MANAGED_ROOT"
-mkdir -p "$MANAGED_ROOT/workspaces" "$MANAGED_ROOT/skills"
+mkdir -p "$SHARED_DIR" "$(dirname "$BUNDLE_MANIFEST_PATH")" "$(dirname "$SHARED_ENTRY_PATH")" "$(dirname "$BUNDLE_ENTRY_PATH")"
 
-info "Installing profile '$PROFILE' into target '$TARGET'"
-
-# Sync workspace templates into actual workspace dirs.
-for agent_dir in "$PROFILE_ROOT/workspaces"/*/; do
-  [[ -d "$agent_dir" ]] || continue
-  agent_id="$(basename "$agent_dir")"
-  target_dir="$WORKSPACES_DIR/$agent_id"
-  mkdir -p "$target_dir"
-
-  for src in "$agent_dir"*.md; do
-    [[ -f "$src" ]] || continue
-    file_name="$(basename "$src")"
-    dst="$target_dir/$file_name"
-
-    case "$file_name" in
-      USER.md|MEMORY.md|IDENTITY.md|HEARTBEAT.md|TOOLS.md)
-        copy_if_missing "$src" "$dst"
-        ;;
-      *)
-        safe_sync_template_file "$src" "$dst" "$SYNC" "$TS"
-        ;;
-    esac
-  done
-done
-
-# Copy skill packages to managed root for explicit ownership.
-if [[ -d "$PROFILE_ROOT/skills" ]]; then
-  cp -R "$PROFILE_ROOT/skills/." "$MANAGED_ROOT/skills/" 2>/dev/null || true
+if [[ -n "$BUNDLE" ]]; then
+  bundle_path="$BUNDLES_ROOT/$BUNDLE.json"
+  [[ -f "$bundle_path" ]] || die "Bundle not found: $BUNDLE"
+  info "Installing bundle '$BUNDLE' into target '$TARGET'"
+else
+  bundle_path=""
+  info "Installing all agents into target '$TARGET'"
 fi
 
-runtime_mcporter="$PROFILE_ROOT/runtime/mcporter.json"
+selected_ids_csv="$(python3 - "$AGENTS_REGISTRY" "$bundle_path" <<'PY'
+import json
+import pathlib
+import sys
+
+registry_path = pathlib.Path(sys.argv[1])
+bundle_path = pathlib.Path(sys.argv[2]) if sys.argv[2] else None
+
+registry = json.loads(registry_path.read_text())
+agents = registry.get("agents", [])
+agent_ids = [a.get("id") for a in agents if isinstance(a, dict) and a.get("id")]
+known = set(agent_ids)
+
+if bundle_path:
+    bundle = json.loads(bundle_path.read_text())
+    selected = bundle.get("agents", [])
+    if not isinstance(selected, list):
+        print("ERROR: bundle file must contain an 'agents' array", file=sys.stderr)
+        sys.exit(2)
+    selected_ids = []
+    for item in selected:
+        if not isinstance(item, str):
+            print("ERROR: bundle agent entries must be strings", file=sys.stderr)
+            sys.exit(2)
+        selected_ids.append(item)
+else:
+    selected_ids = agent_ids
+
+missing = [agent_id for agent_id in selected_ids if agent_id not in known]
+if missing:
+    print("ERROR: bundle references unknown agent ids: " + ", ".join(missing), file=sys.stderr)
+    sys.exit(2)
+
+print(",".join(selected_ids))
+PY
+)"
+
+if [[ -d "$SKILLS_SOURCE_DIR" ]]; then
+  rm -rf "$SHARED_SKILLS_DIR"
+  mkdir -p "$SHARED_SKILLS_DIR"
+  cp -R "$SKILLS_SOURCE_DIR/." "$SHARED_SKILLS_DIR/" 2>/dev/null || true
+fi
+
+runtime_mcporter="$RUNTIME_MCPORTER"
 if [[ -f "$runtime_mcporter" ]]; then
   rendered_mcporter="$(mktemp)"
   python3 - "$runtime_mcporter" "$rendered_mcporter" <<'PY'
@@ -122,35 +175,86 @@ PY
   info "Rendered MCP runtime config: $CONFIG_DIR/mcporter.json"
 fi
 
-render_managed_pack_config "$PROFILE" "$CONFIG_DIR" "$MANAGED_ENTRY_PATH"
-ensure_root_include_hook "$CONFIG_DIR" "$MANAGED_ENTRY_REL"
+render_shared_pack_config "$RUNTIME_FRAGMENT_DIR" "$SHARED_ENTRY_PATH" "$SHARED_SKILLS_RUNTIME_DIR"
+render_agents_pack_config "$AGENTS_REGISTRY" "$BUNDLE_ENTRY_PATH" "$selected_ids_csv"
+ensure_root_include_hook "$CONFIG_DIR" "$SHARED_ENTRY_REL"
+ensure_root_include_hook "$CONFIG_DIR" "$BUNDLE_ENTRY_REL"
 
-python3 - "$MANIFEST_PATH" "$PROFILE" "$MANAGED_ROOT" "$MANAGED_ENTRY_PATH" "$CONFIG_DIR/mcporter.json" "$WORKSPACES_DIR" "$PROFILE_ROOT/workspaces" <<'PY'
+IFS=',' read -r -a selected_ids <<< "$selected_ids_csv"
+for agent_id in "${selected_ids[@]}"; do
+  source_dir="$AGENTS_ROOT/$agent_id"
+  [[ -d "$source_dir" ]] || die "Missing template directory for agent '$agent_id': $source_dir"
+  target_dir="$WORKSPACES_DIR/$agent_id"
+  mkdir -p "$target_dir"
+
+  for src in "$source_dir"/*.md; do
+    [[ -f "$src" ]] || continue
+    file_name="$(basename "$src")"
+    dst="$target_dir/$file_name"
+
+    case "$file_name" in
+      USER.md|MEMORY.md|IDENTITY.md|HEARTBEAT.md|TOOLS.md)
+        copy_if_missing "$src" "$dst"
+        ;;
+      *)
+        safe_sync_template_file "$src" "$dst" "$SYNC" "$TS"
+        ;;
+    esac
+  done
+done
+
+python3 - "$SHARED_MANIFEST_PATH" "$SHARED_DIR" "$SHARED_ENTRY_PATH" "$CONFIG_DIR/mcporter.json" "$SHARED_ENTRY_REL" <<'PY'
 import json
 import pathlib
 import sys
 
 manifest_path = pathlib.Path(sys.argv[1])
-profile = sys.argv[2]
-managed_root = pathlib.Path(sys.argv[3])
-managed_entry = pathlib.Path(sys.argv[4])
-mcporter_path = pathlib.Path(sys.argv[5])
-workspaces_root = pathlib.Path(sys.argv[6])
-profile_workspaces = pathlib.Path(sys.argv[7])
+shared_dir = pathlib.Path(sys.argv[2])
+shared_entry = pathlib.Path(sys.argv[3])
+mcporter_path = pathlib.Path(sys.argv[4])
+shared_rel = sys.argv[5]
 
 managed_files = []
-for p in sorted(managed_root.rglob("*")):
+for p in sorted(shared_dir.rglob("*")):
     if p.is_file():
         managed_files.append(str(p))
-if managed_entry.exists():
-    managed_files.append(str(managed_entry))
+if shared_entry.exists():
+    managed_files.append(str(shared_entry))
 if mcporter_path.exists():
     managed_files.append(str(mcporter_path))
 
+manifest = {
+    "pack": "messyvirgo-openclaw-agents",
+    "scope": "shared",
+    "managed_include_rel": shared_rel,
+    "managed_files": managed_files,
+    "workspace_files": [],
+}
+
+manifest_path.parent.mkdir(parents=True, exist_ok=True)
+manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+PY
+
+python3 - "$BUNDLE_MANIFEST_PATH" "$BUNDLE_KEY" "$BUNDLE_NAME" "$BUNDLE_ENTRY_PATH" "$BUNDLE_ENTRY_REL" "$WORKSPACES_DIR" "$AGENTS_ROOT" "$selected_ids_csv" <<'PY'
+import json
+import pathlib
+import sys
+
+manifest_path = pathlib.Path(sys.argv[1])
+bundle_key = sys.argv[2]
+bundle_name = sys.argv[3]
+bundle_entry = pathlib.Path(sys.argv[4])
+bundle_rel = sys.argv[5]
+workspaces_root = pathlib.Path(sys.argv[6])
+agents_root = pathlib.Path(sys.argv[7])
+selected_ids_csv = sys.argv[8]
+
+selected_ids = [x for x in selected_ids_csv.split(",") if x]
+
 workspace_files = []
-for agent_dir in sorted(profile_workspaces.glob("*/")):
-    agent_id = agent_dir.name
-    for p in sorted(agent_dir.glob("*.md")):
+for agent_id in selected_ids:
+    source_dir = agents_root / agent_id
+    for p in sorted(source_dir.glob("*.md")):
         workspace_files.append(
             {
                 "path": str(workspaces_root / agent_id / p.name),
@@ -158,18 +262,22 @@ for agent_dir in sorted(profile_workspaces.glob("*/")):
             }
         )
 
+managed_files = []
+if bundle_entry.exists():
+    managed_files.append(str(bundle_entry))
+
 manifest = {
     "pack": "messyvirgo-openclaw-agents",
-    "profile": profile,
-    "managed_include_rel": f"packs/messyvirgo-openclaw-agents/generated-{profile}.json",
+    "scope": "bundle",
+    "bundle_key": bundle_key,
+    "bundle_name": bundle_name,
+    "managed_include_rel": bundle_rel,
     "managed_files": managed_files,
     "workspace_files": workspace_files,
 }
 
 manifest_path.parent.mkdir(parents=True, exist_ok=True)
-with manifest_path.open("w") as f:
-    json.dump(manifest, f, indent=2)
-    f.write("\n")
+manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
 PY
 
 info "Install complete."

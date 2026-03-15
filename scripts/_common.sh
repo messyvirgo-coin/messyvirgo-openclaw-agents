@@ -35,6 +35,22 @@ resolve_target_paths() {
   esac
 }
 
+runtime_config_dir_for_target() {
+  local target="$1"
+  local host_config_dir="$2"
+  case "$target" in
+    wrapper)
+      echo "/home/node/.openclaw"
+      ;;
+    openclaw)
+      echo "$host_config_dir"
+      ;;
+    *)
+      die "Unknown target '$target' (expected wrapper|openclaw)"
+      ;;
+  esac
+}
+
 managed_root_for_config() {
   local config_dir="$1"
   echo "$config_dir/$PACK_MANAGED_ROOT"
@@ -43,6 +59,38 @@ managed_root_for_config() {
 manifest_path_for_config() {
   local config_dir="$1"
   echo "$config_dir/$PACK_MANAGED_ROOT/manifest.json"
+}
+
+shared_manifest_path_for_config() {
+  local config_dir="$1"
+  echo "$config_dir/$PACK_MANAGED_ROOT/manifest-shared.json"
+}
+
+bundle_manifest_path_for_config() {
+  local config_dir="$1"
+  local bundle_key="$2"
+  echo "$config_dir/$PACK_MANAGED_ROOT/manifests/bundle-$bundle_key.json"
+}
+
+shared_entry_rel_for_pack() {
+  echo "$PACK_MANAGED_ROOT/generated-shared.json"
+}
+
+bundle_entry_rel_for_pack() {
+  local bundle_key="$1"
+  echo "$PACK_MANAGED_ROOT/generated-bundle-$bundle_key.json"
+}
+
+sanitize_bundle_key() {
+  local raw="${1:-all}"
+  local key
+  key="$(echo "$raw" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9._-' '-')"
+  key="${key#-}"
+  key="${key%-}"
+  if [[ -z "$key" ]]; then
+    key="all"
+  fi
+  echo "$key"
 }
 
 ensure_dirs() {
@@ -78,16 +126,13 @@ safe_sync_template_file() {
   fi
 }
 
-render_managed_pack_config() {
-  local profile="$1"
-  local config_dir="$2"
-  local out_path="$3"
-  local fragment_dir="$ROOT_DIR/profiles/$profile/config-fragments"
-  local managed_skills_dir="$config_dir/$PACK_MANAGED_ROOT/skills"
+render_shared_pack_config() {
+  local fragment_dir="$1"
+  local out_path="$2"
+  local managed_skills_dir="$3"
 
   python3 - "$fragment_dir" "$out_path" "$managed_skills_dir" <<'PY'
 import json
-import os
 import pathlib
 import sys
 
@@ -128,6 +173,45 @@ out_path.parent.mkdir(parents=True, exist_ok=True)
 with out_path.open("w") as f:
     json.dump(merged, f, indent=2)
     f.write("\n")
+PY
+}
+
+render_agents_pack_config() {
+  local registry_path="$1"
+  local out_path="$2"
+  local selected_ids_csv="${3:-}"
+
+  python3 - "$registry_path" "$out_path" "$selected_ids_csv" <<'PY'
+import json
+import pathlib
+import sys
+
+registry_path = pathlib.Path(sys.argv[1])
+out_path = pathlib.Path(sys.argv[2])
+selected_csv = sys.argv[3]
+
+registry = json.loads(registry_path.read_text())
+agents = registry.get("agents", [])
+if not isinstance(agents, list):
+    print("ERROR: agents/registry.json must contain an 'agents' array", file=sys.stderr)
+    sys.exit(2)
+
+if selected_csv.strip():
+    selected_ids = [x for x in selected_csv.split(",") if x]
+else:
+    selected_ids = [a.get("id") for a in agents if isinstance(a, dict) and a.get("id")]
+
+selected_set = set(selected_ids)
+selected_agents = [a for a in agents if isinstance(a, dict) and a.get("id") in selected_set]
+
+missing = [agent_id for agent_id in selected_ids if agent_id not in {a.get("id") for a in selected_agents}]
+if missing:
+    print("ERROR: Unknown agent ids in selection: " + ", ".join(missing), file=sys.stderr)
+    sys.exit(2)
+
+out = {"agents": {"list": selected_agents}}
+out_path.parent.mkdir(parents=True, exist_ok=True)
+out_path.write_text(json.dumps(out, indent=2) + "\n")
 PY
 }
 

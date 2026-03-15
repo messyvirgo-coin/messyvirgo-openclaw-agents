@@ -1,0 +1,10 @@
+{
+  "name": "mv-t1",
+  "agents": [
+    "mv-t1-mngr",
+    "mv-t1-coder",
+    "mv-t1-researcher",
+    "mv-t1-planner",
+    "mv-t1-funds"
+  ]
+}

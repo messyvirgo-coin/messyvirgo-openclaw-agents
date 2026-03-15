@@ -1,11 +1,10 @@
-# Profile `mv-t1`
+# Legacy profile `mv-t1`
 
-Team profile `mv-t1` defines a tenant-scoped agent topology:
+This directory is deprecated and kept only as migration context.
 
-- `mv-t1-mngr`
-- `mv-t1-coder`
-- `mv-t1-researcher`
-- `mv-t1-planner`
-- `mv-t1-funds`
+Canonical source-of-truth moved to:
 
-All ids are namespaced to avoid collisions with user-managed agents.
+- `agents/` for agent workspace templates and metadata
+- `skills/` for global skills
+- `runtime/` for shared OpenClaw runtime fragments
+- `bundles/` for agent-only bundle selectors

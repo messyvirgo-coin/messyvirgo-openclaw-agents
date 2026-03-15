@@ -15,7 +15,13 @@ source ../messyvirgo-openclaw-client/.env
 set +a
 export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
 export MESSY_VIRGO_API_KEY="your-api-key"
-./scripts/install.sh --target wrapper --profile mv-t1
+./scripts/install.sh --target wrapper
+```
+
+Install a bundle only:
+
+```bash
+./scripts/install.sh --target wrapper --bundle mv-t1
 ```
 
 Restart wrapper services after install/update so runtime files are reloaded:
@@ -31,13 +37,25 @@ Update:
 ```bash
 export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
 export MESSY_VIRGO_API_KEY="your-api-key"
-./scripts/update.sh --target wrapper --profile mv-t1
+./scripts/update.sh --target wrapper
+```
+
+Update a bundle only:
+
+```bash
+./scripts/update.sh --target wrapper --bundle mv-t1
 ```
 
 Remove (preserve state):
 
 ```bash
 ./scripts/remove.sh --target wrapper
+```
+
+Remove one bundle only (shared global assets remain):
+
+```bash
+./scripts/remove.sh --target wrapper --bundle mv-t1
 ```
 
 Remove including stateful files:
@@ -48,8 +66,7 @@ Remove including stateful files:
 
 ## Post-Install: Per-Agent Model Assignment
 
-After install/update, assign the model for each `mv-t1-*` agent in the
-OpenClaw dashboard Agent settings.
+After install/update, assign the model for each managed agent in the OpenClaw dashboard Agent settings.
 
 If an agent has no explicit model configured, it falls back to the runtime
 default model of the target instance.
