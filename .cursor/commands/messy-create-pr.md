@@ -38,7 +38,7 @@
 **Prefer using GitHub MCP tools** for fetching commit data when possible, as it provides structured data and better integration.
 
 1. **Get commits using GitHub MCP**:
-   - Use `mcp_github_list_commits` with:
+   - Use GitHub MCP tool `list_commits` with:
      - `owner`: Repository owner (from prerequisites)
      - `repo`: Repository name (from prerequisites)
      - `sha`: Current branch name (or HEAD commit SHA)
@@ -62,11 +62,11 @@
    - Parse output to categorize: Added (A), Modified (M), Deleted (D), Renamed (R)
 2. Summarize file changes:
    - Count total files changed
-   - If ≤ 10 files: List all files with their status (e.g., "Modified: services/api/src/api/routes/tokens.py")
+   - If ≤ 10 files: List all files with their status (e.g., "Modified: scripts/install.sh")
    - If > 10 files: Group by top-level directory/package and summarize:
-     - Count files per directory (e.g., "services/api: 5 files, packages/messy-core: 3 files")
-     - List key files only (e.g., routes, services, major components)
-   - Identify affected areas: services, packages, infrastructure, config, docs, etc.
+     - Count files per directory (e.g., "agents/: 12 files, runtime/: 3 files")
+     - List key files only (e.g., scripts, agent definitions, bundles, docs)
+   - Identify affected areas: `agents/`, `bundles/`, `runtime/`, `scripts/`, `.cursor/commands/`, `docs/`, etc.
 3. Use this information to inform PR description sections
 
 ## Resolve GitHub Issue (if issue number found)
@@ -74,7 +74,7 @@
 **Note**: This step is optional and non-blocking. Only perform if GitHub issue number was found in branch name. The issue number refers to an issue in the current repository.
 
 1. **Fetch GitHub issue details using MCP**:
-   - Use `mcp_github_get_issue` with:
+   - Use GitHub MCP tool `get_issue` with:
      - `owner`: Repository owner (from prerequisites)
      - `repo`: Repository name (from prerequisites)
      - `issue_number`: Extracted GitHub issue number (as integer)
@@ -113,7 +113,7 @@ Format: `{prefix}: {Description} (#{GitHub-Issue})` (GitHub issue number optiona
 ## Create PR Description
 
 1. **Load PR template using GitHub MCP** (preferred):
-   - Use `mcp_github_get_file_contents` with:
+   - Use GitHub MCP tool `get_file_contents` with:
      - `owner`: Repository owner
      - `repo`: Repository name
      - `path`: `.github/PULL_REQUEST_TEMPLATE.md`
@@ -141,8 +141,8 @@ Format: `{prefix}: {Description} (#{GitHub-Issue})` (GitHub issue number optiona
    - Brief statement if obvious from commits, otherwise can be minimal
 
    **How to Review/Test:**
-   - Based on changed files: suggest what to test (e.g., "Test token search endpoint: POST /api/v1/tokens/search")
-   - If tests were added/modified, mention running them
+   - Based on changed files: suggest what to test (e.g., install/update/remove flow, bundle selection, generated agent files)
+   - Include exact commands and target mode (`wrapper` vs `plain`) when relevant
 
    **Key Decisions & Tradeoffs:**
    - Extract from commit message bodies if they contain design notes
@@ -170,33 +170,36 @@ Format: `{prefix}: {Description} (#{GitHub-Issue})` (GitHub issue number optiona
 
 5. **Build the complete PR description** as a string (do not save to file yet)
 
-## Run Tests and Verify All Pass
+## Run Repo-Aware Verification (Mandatory)
 
-**Note**: This step is mandatory. PR creation will be blocked if tests fail.
+**Note**: This step is mandatory. PR creation is blocked if any executed verification command fails.
 
-1. **Run All Tests**:
-   - From workspace root, run: `uv run pytest -v`
-   - This auto-discovers and runs all test files (`test_*.py` and `*_test.py`) across the entire workspace
-   - Verify exit code is 0 (all tests pass)
-   - If tests fail, display error output and **block PR creation**
-   - Prompt user to fix failing tests before proceeding
+1. **Detect and run available checks** (run from workspace root):
+   - Prefer commands that actually exist in this repo/toolchain, in this order:
+     1. `pnpm -r test` (if `pnpm-workspace.yaml` exists)
+     2. `npm test` (if root `package.json` has a `test` script)
+     3. `uv run pytest -v` (only if `pytest` is installed and Python tests exist)
+     4. `pytest -v` (only if installed and Python tests exist)
+   - If no test runner is configured, run baseline verification for this repo:
+     - `bash -n scripts/*.sh`
+     - `jq empty agents/registry.json bundles/*.json runtime/*.json runtime/config-fragments/*.json`
+   - Verify every executed command exits with code 0.
 
-2. **Handle Test Failures**:
-   - If tests fail, do NOT create the PR
-   - Display clear error message: "Tests failed. Please fix failing tests before creating PR."
-   - Show the test output to help user debug
-   - Stop workflow execution
-   - Do NOT proceed to PR creation step
+2. **Handle verification failures**:
+   - If any command fails, do NOT create the PR.
+   - Display: "Verification failed. Please fix failing checks before creating PR."
+   - Include failing command(s) and output to aid debugging.
+   - Stop workflow execution; do not proceed to PR creation.
 
-3. **On Success**:
-   - Display test summary (e.g., "All tests passed: 25 passed in 1.05s")
-   - Continue to PR creation step
+3. **On success**:
+   - Summarize which checks were run and passed.
+   - Continue to PR creation.
 
 ## Create Pull Request (via GitHub MCP)
 
 **Prefer using GitHub MCP** for creating PRs as it provides better error handling and structured responses.
 
-1. **Use `mcp_github_create_pull_request`** with the following parameters:
+1. **Use GitHub MCP tool `create_pull_request`** with the following parameters:
    - `owner`: Repository owner (from prerequisites)
    - `repo`: Repository name (from prerequisites)
    - `title`: Generated PR title (includes GitHub issue number if found)
@@ -215,7 +218,7 @@ Format: `{prefix}: {Description} (#{GitHub-Issue})` (GitHub issue number optiona
 
 3. **Post comment on GitHub issue (optional)**:
    - **Note**: This step is optional and non-blocking. Only perform if GitHub issue number was found and PR was successfully created.
-   - Use `mcp_github_add_issue_comment` with:
+   - Use GitHub MCP tool `add_issue_comment` with:
      - `owner`: Repository owner (from prerequisites)
      - `repo`: Repository name (from prerequisites)
      - `issue_number`: Extracted GitHub issue number (as integer)
@@ -236,3 +239,4 @@ Format: `{prefix}: {Description} (#{GitHub-Issue})` (GitHub issue number optiona
 ## Completion
 
 - Answer: "done"
+- Include PR URL when created
