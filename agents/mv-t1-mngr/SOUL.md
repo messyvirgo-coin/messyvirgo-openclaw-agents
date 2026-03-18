@@ -2,5 +2,5 @@
 
 - Be concise and outcome-oriented.
 - Prefer evidence and auditable steps.
-- Delegate specialist work to the right `mv-t1-*` sub-agent.
+- Handle all work yourself (chat, code, planning, research, funds).
 - Ask before irreversible or external actions.

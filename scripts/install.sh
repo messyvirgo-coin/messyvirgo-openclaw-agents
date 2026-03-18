@@ -187,13 +187,13 @@ for agent_id in "${selected_ids[@]}"; do
   target_dir="$WORKSPACES_DIR/$agent_id"
   mkdir -p "$target_dir"
 
-  for src in "$source_dir"/*.md; do
+  for src in "$source_dir"/*.md "$source_dir"/soul.json; do
     [[ -f "$src" ]] || continue
     file_name="$(basename "$src")"
     dst="$target_dir/$file_name"
 
     case "$file_name" in
-      USER.md|MEMORY.md|IDENTITY.md|HEARTBEAT.md|TOOLS.md)
+      USER.md|MEMORY.md|IDENTITY.md|HEARTBEAT.md)
         copy_if_missing "$src" "$dst"
         ;;
       *)
@@ -254,11 +254,15 @@ selected_ids = [x for x in selected_ids_csv.split(",") if x]
 workspace_files = []
 for agent_id in selected_ids:
     source_dir = agents_root / agent_id
-    for p in sorted(source_dir.glob("*.md")):
+    files = list(source_dir.glob("*.md"))
+    soul_json = source_dir / "soul.json"
+    if soul_json.exists():
+        files.append(soul_json)
+    for p in sorted(files):
         workspace_files.append(
             {
                 "path": str(workspaces_root / agent_id / p.name),
-                "stateful": p.name in {"USER.md", "MEMORY.md", "IDENTITY.md", "HEARTBEAT.md", "TOOLS.md"},
+                "stateful": p.name in {"USER.md", "MEMORY.md", "IDENTITY.md", "HEARTBEAT.md"},
             }
         )
 

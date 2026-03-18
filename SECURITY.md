@@ -15,7 +15,7 @@ Include:
 
 ## Scope notes
 
-This repository contains agent pack assets (workspace templates, profile config fragments, runtime templates, and pack-management scripts).
+This repository contains agent pack assets (workspace templates, agent registry and bundle config, runtime templates, and pack-management scripts).
 
 When reporting issues, avoid posting any secrets or sensitive runtime values, including:
 

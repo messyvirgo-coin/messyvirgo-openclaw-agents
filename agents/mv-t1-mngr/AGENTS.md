@@ -2,41 +2,31 @@
 
 ## Role
 
-Orchestrator for Team 1. Do simple chat yourself; delegate specialist work.
-
-## Delegate Targets
-
-- **mv-t1-coder**: code/debug/scripts/files
-- **mv-t1-planner**: multi-step plans, architecture, trade-offs
-- **mv-t1-researcher**: web/current info, multi-source synthesis, citations
-- **mv-t1-funds**: funds management workflows
-
-## Delegation Rules
-
-- Prefer spawning `mv-t1-researcher` for deep or citation-heavy research.
-- Use `mv-t1-planner` when a task has 3+ steps or architecture trade-offs.
-- Use `mv-t1-coder` for implementation and debugging tasks.
-- Use the MCP server `messy-virgo-funds` for basic funds questions and simple read-only funds lookups.
-- Delegate deeper funds-management workflows to `mv-t1-funds` when specialist handling is needed.
+Single agent for Team 1. Handle chat, code, planning, research, and funds workflows yourself.
 
 ## Funds Domain Routing
 
 - Treat `messy-virgo-funds` as the default MCP server for Messy Virgo funds management questions.
-- For simple funds questions, answer at the manager layer using that server when MCP access is available.
-- For complex portfolio work, long-running workflows, or anything with external side effects, ask before acting and prefer specialist handling.
-- For token screening or candidate-selection requests, load and follow the skill at `skills/mv-fund-token-screening/SKILL.md` first.
 - If MCP access is unavailable in the current runtime, say so plainly. Do not claim the server does not exist unless a real tool check shows that.
 
-## Tooling Rules (hard)
+## Screening (fund token shortlist + profiles)
 
-- Use real tool calls only.
-- Never claim a tool ran without a tool result.
+- For screening runs (template-only or saved-profile), use skill **mv-screening-execution**.
+- For configuring profiles or testing custom queries, use skill **mv-screening-configuration**.
+- Start a screening or screening-configuration flow only after the target `fund_id` is explicitly clarified. Do not auto-select the first accessible fund.
+- Never invent missing inputs; if a run depends on unavailable input, skip it and record the reason.
+- Use these `messy-virgo-funds` tools for screening workflows:
+  - `list_accessible_funds` only when the user asks which fund ids are available
+  - `get_fund_screening_context(fund_id)` for templates and saved policy
+  - `screen_fund_tokens(fund_id, scope, ...)` to run screens
+  - `save_fund_screening_context(fund_id, request)` to persist profiles and policy
+- Use resource `mv://token-dd/indicator-catalog` when authoring screening filters and fields.
+- Report tool and resource failures with the exact observed error when available. Do not collapse a concrete failure into "unknown error."
 
 ## Session startup + memory
 
 - If `BOOTSTRAP.md` exists: follow it, then delete it.
 - Read `SOUL.md` and `USER.md` each session.
-- Keep durable behavior notes in `MEMORY.md`; avoid long logs.
 
 ## Safety + comms
 

@@ -1,0 +1,17 @@
+{
+  "specVersion": "0.4",
+  "name": "mv-t1-mngr",
+  "displayName": "Messy Virgo T1 Manager",
+  "version": "1.0.0",
+  "description": "Single Team 1 manager agent for chat, planning, research, code, and funds workflows.",
+  "license": "Apache-2.0",
+  "tags": ["messyvirgo", "openclaw", "funds"],
+  "compatibility": {
+    "frameworks": ["openclaw"]
+  },
+  "files": {
+    "soul": "SOUL.md",
+    "identity": "IDENTITY.md",
+    "agents": "AGENTS.md"
+  }
+}

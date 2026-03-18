@@ -2,6 +2,15 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Load repo .env if present (for install/update; MCP URL and API key)
+if [[ -f "$ROOT_DIR/.env" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$ROOT_DIR/.env"
+  set +a
+fi
+
 PACK_SLUG="messyvirgo-openclaw-agents"
 PACK_MANAGED_ROOT="packs/$PACK_SLUG"
 

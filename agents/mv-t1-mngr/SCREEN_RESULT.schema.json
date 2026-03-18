@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://messyvirgo.com/schemas/screen-result/v1",
+  "title": "ScreenResult",
+  "description": "Canonical artifact for client-side screening runs. Written by the execution skill after evaluating SCREENING.md, calling screen_fund_tokens (or skipping runs when input is missing), and aggregating results. Non-invention rule: runs that depend on unavailable input must be recorded as skipped/failed with a reason, never filled with invented values.",
+  "type": "object",
+  "required": ["schema_version", "fund_id", "generated_at_utc", "runs", "candidates"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "screen-result-v1",
+      "description": "Contract version for artifact consumers."
+    },
+    "fund_id": {
+      "type": "string",
+      "description": "Fund that was screened (e.g. mvf-mvi-test-001)."
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp when this artifact was produced."
+    },
+    "snapshot_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Optional snapshot date used for screening (YYYY-MM-DD); present if a single date was used across runs."
+    },
+    "runs": {
+      "type": "array",
+      "description": "One entry per run defined in SCREENING.md (executed, skipped, or failed). Order matches evaluation order.",
+      "items": {
+        "type": "object",
+        "required": ["run_id", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "description": "Stable id for this run (e.g. template id, profile id, or ordinal)."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed",
+              "skipped_missing_input",
+              "skipped_condition_false",
+              "failed_validation",
+              "failed_error"
+            ],
+            "description": "executed: screen_fund_tokens was called and returned. skipped_missing_input: condition required input (e.g. risk_on) that was not provided; no value invented. skipped_condition_false: conditional run's condition evaluated false. failed_validation: request invalid (e.g. bad selector). failed_error: API or network error."
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["holdings", "universe"],
+            "description": "Present when status is executed; scope used for screen_fund_tokens."
+          },
+          "template_id": {
+            "type": "string",
+            "description": "Present when run was driven by a library template id."
+          },
+          "profile_id": {
+            "type": "string",
+            "description": "Present when run was driven by a fund profile id from screening_policy."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Human-readable reason for skip/failure (e.g. 'risk_on not provided; do not invent'). Omitted when status is executed."
+          },
+          "result_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Present when status is executed; number of rows returned."
+          }
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "description": "Deduplicated candidate list from executed runs only. Each candidate includes identity fields and LLM-supplied candidate_reason.",
+      "items": {
+        "type": "object",
+        "required": ["token_id", "symbol", "candidate_reason", "source_run_ids"],
+        "additionalProperties": false,
+        "properties": {
+          "token_id": {
+            "type": "integer",
+            "description": "Primary token id from screening results."
+          },
+          "coingecko_id": {
+            "type": ["string", "null"],
+            "description": "Coingecko id when available."
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "chain": {
+            "type": "string"
+          },
+          "contract_address": {
+            "type": "string"
+          },
+          "candidate_reason": {
+            "type": "string",
+            "description": "Short LLM-forced reasoning for why this token is a candidate (required for each candidate)."
+          },
+          "source_run_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Run ids that produced this token (e.g. ['momentum_combo_v1', 'social_conviction_v1'])."
+          },
+          "indicator_snapshot": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Optional copy of indicator fields returned for this token (score_*, kpi_*) from the screening response."
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,29 +2,78 @@
 
 ## Targets
 
-- `wrapper`: secure-wrapper deployment defaults (`~/.openclaw-secure`, `~/OpenClawWorkspaces`)
-- `openclaw`: plain OpenClaw defaults (`~/.openclaw`, `~/.openclaw/workspaces`)
+- `wrapper`: secure-wrapper deployment defaults
+  - config: `~/.openclaw-secure`
+  - workspaces: `~/OpenClawWorkspaces`
+- `openclaw`: plain OpenClaw defaults
+  - config: `~/.openclaw`
+  - workspaces: `~/.openclaw/workspaces`
 
-## Commands
+If you use custom locations, set `OPENCLAW_CONFIG_DIR` and/or
+`OPENCLAW_WORKSPACES_DIR` before running the scripts.
 
-Install:
+## Recommended env setup
+
+The pack scripts auto-load `.env` from the repo root. Set it up once and then
+run `install.sh` / `update.sh` without repeating exports in every command.
 
 ```bash
-set -a
-source ../messyvirgo-openclaw-client/.env
-set +a
-export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
-export MESSY_VIRGO_API_KEY="your-api-key"
-./scripts/install.sh --target wrapper
+cp .env.example .env
+# edit .env and set real values
 ```
 
-Install a bundle only:
+Required values:
+
+- `MESSY_VIRGO_MCP_URL`
+- `MESSY_VIRGO_API_KEY`
+
+These values are rendered into managed `mcporter.json` during install/update.
+Do not rely on dashboard-only edits for these credentials.
+
+If you do not want a repo-local `.env`, you can still export the variables in
+your current shell before running the scripts.
+
+## Wrapper workflow
+
+Install the Team 1 bundle:
 
 ```bash
 ./scripts/install.sh --target wrapper --bundle mv-t1
 ```
 
-Restart wrapper services after install/update so runtime files are reloaded:
+Update the Team 1 bundle:
+
+```bash
+./scripts/update.sh --target wrapper --bundle mv-t1
+```
+
+Install or update everything in the pack:
+
+```bash
+./scripts/install.sh --target wrapper
+./scripts/update.sh --target wrapper
+```
+
+Remove the Team 1 bundle but keep shared pack assets:
+
+```bash
+./scripts/remove.sh --target wrapper --bundle mv-t1
+```
+
+Remove all pack-managed files but keep stateful workspace files:
+
+```bash
+./scripts/remove.sh --target wrapper
+```
+
+Remove pack-managed files and also purge stateful workspace files:
+
+```bash
+./scripts/remove.sh --target wrapper --purge-state
+```
+
+Restart wrapper services after install or update so config/runtime changes are
+picked up:
 
 ```bash
 cd ../messyvirgo-openclaw-client
@@ -32,60 +81,135 @@ cd ../messyvirgo-openclaw-client
 ./scripts/up.sh
 ```
 
-Update:
+## Plain OpenClaw workflow
+
+Install the Team 1 bundle:
 
 ```bash
-export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
-export MESSY_VIRGO_API_KEY="your-api-key"
-./scripts/update.sh --target wrapper
+./scripts/install.sh --target openclaw --bundle mv-t1
 ```
 
-Update a bundle only:
+Update the Team 1 bundle:
+
+```bash
+./scripts/update.sh --target openclaw --bundle mv-t1
+```
+
+Install or update everything in the pack:
+
+```bash
+./scripts/install.sh --target openclaw
+./scripts/update.sh --target openclaw
+```
+
+Remove the Team 1 bundle:
+
+```bash
+./scripts/remove.sh --target openclaw --bundle mv-t1
+```
+
+Remove all pack-managed files:
+
+```bash
+./scripts/remove.sh --target openclaw
+```
+
+## What install/update changes
+
+- Shared runtime config and shared skills are replaced by the pack.
+- The rendered agent list comes from `agents/registry.json` and selected bundles.
+- Template workspace files are refreshed from `agents/<agent-id>/`.
+- Stateful workspace files are preserved unless you explicitly purge state.
+
+In this pack, older client installs may still have files that are no longer
+shipped. `update.sh` does not automatically delete those stale files.
+
+## Clean roll-out after pack changes
+
+Use this flow when the pack removed agents, removed skills, or stopped shipping
+some workspace files.
+
+### Wrapper
+
+1. Update the bundle:
 
 ```bash
 ./scripts/update.sh --target wrapper --bundle mv-t1
 ```
 
-Remove (preserve state):
+1. Remove retired agent workspaces:
 
 ```bash
-./scripts/remove.sh --target wrapper
+rm -rf ~/OpenClawWorkspaces/mv-t1-coder \
+  ~/OpenClawWorkspaces/mv-t1-planner \
+  ~/OpenClawWorkspaces/mv-t1-researcher \
+  ~/OpenClawWorkspaces/mv-t1-funds
 ```
 
-Remove one bundle only (shared global assets remain):
+1. Remove stale files from the remaining manager workspace if they still exist:
 
 ```bash
-./scripts/remove.sh --target wrapper --bundle mv-t1
+rm -f ~/OpenClawWorkspaces/mv-t1-mngr/TOOLS.md \
+  ~/OpenClawWorkspaces/mv-t1-mngr/MEMORY.md
 ```
 
-Remove including stateful files:
+1. Restart the wrapper:
 
 ```bash
-./scripts/remove.sh --target wrapper --purge-state
+cd ../messyvirgo-openclaw-client
+./scripts/down.sh
+./scripts/up.sh
 ```
 
-## Post-Install: Per-Agent Model Assignment
+### Plain OpenClaw
 
-After install/update, assign the model for each managed agent in the OpenClaw dashboard Agent settings.
+1. Update the bundle:
+
+```bash
+./scripts/update.sh --target openclaw --bundle mv-t1
+```
+
+1. Remove retired agent workspaces:
+
+```bash
+rm -rf ~/.openclaw/workspaces/mv-t1-coder \
+  ~/.openclaw/workspaces/mv-t1-planner \
+  ~/.openclaw/workspaces/mv-t1-researcher \
+  ~/.openclaw/workspaces/mv-t1-funds
+```
+
+1. Remove stale files from the remaining manager workspace if they still exist:
+
+```bash
+rm -f ~/.openclaw/workspaces/mv-t1-mngr/TOOLS.md \
+  ~/.openclaw/workspaces/mv-t1-mngr/MEMORY.md
+```
+
+If you use custom workspace paths, run the same cleanup inside
+`$OPENCLAW_WORKSPACES_DIR`.
+
+### Full reinstall
+
+If you want to fully reset the surviving agent to the current pack templates:
+
+```bash
+./scripts/remove.sh --target wrapper --bundle mv-t1 --purge-state
+./scripts/install.sh --target wrapper --bundle mv-t1
+```
+
+Then remove stale workspaces/files as shown above and restart the wrapper.
+
+## Post-install model assignment
+
+After install/update, assign the model for each managed agent in the OpenClaw
+dashboard Agent settings.
 
 If an agent has no explicit model configured, it falls back to the runtime
 default model of the target instance.
 
-## MCP Runtime Values (Funds Agent)
+## Telegram setup via OpenClaw CLI
 
-The funds MCP runtime is sourced from:
-
-- `MESSY_VIRGO_MCP_URL`
-- `MESSY_VIRGO_API_KEY`
-
-Set these values before install/update (shell exports or wrapper `.env`).
-Pack scripts render them into managed `mcporter.json`.
-
-Do not rely on dashboard-only edits for these runtime credentials.
-
-## Telegram Setup via OpenClaw CLI
-
-Add Telegram account and bind it to `mv-t1-mngr`:
+Add Telegram and bind it to `mv-t1-mngr`:
 
 ```bash
 export TELEGRAM_BOT_TOKEN="your-bot-token"
@@ -103,7 +227,7 @@ If CLI access is blocked by local `pairing required`, approve device pairing:
 Complete Telegram DM pairing:
 
 ```bash
-# Send /start or "hi" to your bot in Telegram first
+# send /start or "hi" to your bot in Telegram first
 ../messyvirgo-openclaw-client/scripts/cli.sh pairing list --channel telegram
 ../messyvirgo-openclaw-client/scripts/cli.sh pairing approve telegram <CODE> --notify
 ```

@@ -33,24 +33,34 @@ Those docs cover:
 
 ## Source Layout
 
-- `skills/`: global skills loaded instance-wide
+- `skills/`: skills loaded instance-wide; use subfolders like `skills/mv-t1-mngr/` for agent-specific skills (see `skills/README.md`)
 - `runtime/`: global OpenClaw runtime fragments and `mcporter.json` template
-- `agents/`: reusable agent definitions (`registry.json`) and workspace templates
-- `bundles/`: optional agent-only deployment selectors
+- `agents/`: **source of truth** — agent registry (`registry.json`) and workspace templates (e.g. `agents/mv-t1-mngr/*.md` plus optional `soul.json`). Install/update scripts copy these into the target’s workspaces directory; the live workspaces live under the OpenClaw config (e.g. `~/.openclaw/workspaces` or wrapper paths), not in this repo.
+- `bundles/`: optional agent-only deployment selectors (e.g. `mv-t1` bundle picks which agents from the registry get installed)
 
-Legacy `profiles/` content is retained only for migration context and is no longer canonical.
+## SoulSpec vs OpenClaw Files
+
+This pack aims to stay close to SoulSpec while still working well in OpenClaw.
+
+- SoulSpec-style core agent files in this repo are `soul.json`, `SOUL.md`, `IDENTITY.md`, and `AGENTS.md`.
+- `BOOTSTRAP.md` and `USER.md` are kept as OpenClaw-specific workspace files because OpenClaw reads and uses them directly.
+- `TOOLS.md` and `MEMORY.md` are not shipped by this pack; operational tool guidance belongs in `AGENTS.md` and task-specific procedures should live in `skills/`.
 
 ## Pack Install
 
-After the client is installed and configured, install this pack from this repo:
+After the client is installed and configured, install this pack from this repo. The install and update scripts need `MESSY_VIRGO_MCP_URL` and `MESSY_VIRGO_API_KEY` for the MCP runtime config. You can provide them in any of these ways:
 
 ```bash
-## Option A: wrapper installed on same machine
+## Option A: .env in this repo (recommended for local use)
+cp .env.example .env
+# Edit .env and set real values; do not commit .env
+
+## Option B: client wrapper env (when using the wrapper)
 set -a
 source ../messyvirgo-openclaw-client/.env
 set +a
 
-## Option B: export directly in current shell
+## Option C: export in current shell
 export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
 export MESSY_VIRGO_API_KEY="your-api-key"
 
@@ -158,9 +168,9 @@ This pack no longer ships provider/model catalog fragments. After install/update
 If you do not assign a model per agent, agents use the runtime default model
 configured in the target OpenClaw instance.
 
-## MCP Runtime Values (Funds Agent)
+## MCP Runtime Values
 
-`mv-t1-funds` uses MCP runtime values from environment variables:
+The pack uses MCP runtime values from environment variables (e.g. for funds MCP used by mv-t1-mngr):
 
 - `MESSY_VIRGO_MCP_URL`
 - `MESSY_VIRGO_API_KEY`
