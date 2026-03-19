@@ -20,9 +20,8 @@ metadata:
 
 ## Purpose
 
-- This skill owns one-time runtime bootstrap for agent-local workflow files.
-- It is generic by role, but today it initializes the screening workspace only.
-- It prepares local files and directories so workflow-specific skills can assume the runtime workspace already exists.
+- Define and enforce the runtime bootstrap contract (which assets exist, where they live, and how they are initialized).
+- Guarantee idempotent setup behavior and explicit reporting of what was created versus already present.
 
 ## Runtime Assets Owned Today
 
@@ -30,26 +29,28 @@ metadata:
 - `agent-workflows/screening/results/`
 - `agent-workflows/screening/history/`
 - `agent-workflows/screening/SCREENING.md`
-- `SCREENING.default.md` bundled with this skill as the starter template for the runtime workflow file
+
+## Bundled template files in the skill's directory
+
+- `SCREENING.default.md`
 
 ## Setup Flow
 
-1. Confirm which supported workflow workspace should be initialized. Today that means screening.
-2. Ensure `agent-workflows/screening/`, `agent-workflows/screening/results/`, and `agent-workflows/screening/history/` exist.
-3. If `agent-workflows/screening/SCREENING.md` does not exist, create it from this skill's bundled `SCREENING.default.md`.
-4. If the runtime file already exists, leave it unchanged unless the user explicitly asks to reset or overwrite it.
-5. Report exactly which paths were created, which already existed, and whether the runtime workflow file was created or left intact.
+Execute all steps defined below. Even if a step should fail, proceed to the next one and always end with the 'Final Step'
 
+### Step 1: Setup Token Screening
+
+1. Ensure `agent-workflows/screening/`, `agent-workflows/screening/results/`, and `agent-workflows/screening/history/` exist.
+2. If `agent-workflows/screening/SCREENING.md` does not exist, create it from this skill's bundled `SCREENING.default.md`.
+3. If the runtime file already exists, leave it unchanged unless the user explicitly asks to reset or overwrite it.
+
+### Final Step
+
+1. Report exactly which paths were created, which already existed, and whether the runtime workflow file was created or left intact.
+  
 ## Boundaries
 
 - **Bootstrap only:** This skill prepares runtime workspace files and directories. It does not inspect fund policy, save profiles, or execute screening runs.
 - **Idempotent behavior:** Re-running setup must be safe. Existing directories remain in place and existing runtime files are not overwritten by default.
-- **No silent reset:** Do not replace an existing `agent-workflows/screening/SCREENING.md` with the default template unless the user explicitly asks for that reset.
+- **No silent reset:** Do not replace an existing runtime files with a template unless the user explicitly asks for that reset.
 - **No invented assets:** Create only the runtime assets defined above. Do not add extra workflow files, result artifacts, or policy content that the bundled default does not define.
-- **Local workspace only:** This skill performs local file bootstrap only. It does not call screening MCP tools or modify fund state in the backend.
-
-## Relation To Other Skills
-
-- **mv-agent-setup** prepares the runtime workspace so other workflow skills can operate safely.
-- **mv-screening-configuration** assumes the screening runtime workspace already exists and changes what will run in future executions.
-- **mv-screening-execution** assumes the screening runtime workspace already exists and performs deterministic screening runs.
