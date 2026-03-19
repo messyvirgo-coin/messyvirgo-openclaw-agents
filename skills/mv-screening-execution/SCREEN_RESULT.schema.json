@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mv-screening-execution/SCREEN_RESULT.schema.json",
+  "title": "Screen Result v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "fund_id",
+    "generated_at_utc",
+    "runs",
+    "candidates"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "screen-result-v1"
+    },
+    "fund_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "run_id",
+          "status"
+        ],
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed",
+              "skipped_missing_input",
+              "skipped_condition_false",
+              "failed_validation",
+              "failed_error"
+            ]
+          },
+          "scope": {
+            "type": "string"
+          },
+          "result_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "token_id",
+          "symbol",
+          "candidate_reason",
+          "source_run_ids"
+        ],
+        "properties": {
+          "token_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "minLength": 1
+          },
+          "candidate_reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_run_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "coingecko_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "chain": {
+            "type": "string"
+          },
+          "contract_address": {
+            "type": "string"
+          },
+          "indicator_snapshot": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}
