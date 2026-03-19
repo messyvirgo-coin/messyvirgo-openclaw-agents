@@ -1,56 +1,39 @@
 ---
 name: mv-agent-setup
-description: |
-  Setup or update the Messy Virgo (MV / MESSY) funds management agent configuration.
-  Use to bootstrap a fresh or updated installation, new agent checkout, 
-  or when a Messy Virgo (mv-prefix) skill reports missing components or configuration.
-metadata:
-  author: messy-virgo-platform
-  version: "1.0"
+description: Use when bootstrapping a new Messy Virgo agent checkout, initializing runtime files, or fixing missing assets for token screening.
 ---
 
 # Agent Setup
 
-## When to Use This Skill
+## Overview
+
+This skill bootstraps the local agent runtime workspace. It creates the required directories and files from the bundled default when they are missing.
+
+## When to Use
 
 - A fresh agent installation needs its runtime workspace initialized.
 - A workflow skill reports that required runtime files or directories are missing.
-- The user wants to bootstrap local workflow scaffolding before configuring or executing it.
 - The user wants a safe, idempotent setup pass that reports what was created versus what was already present.
 
-## Purpose
+## Quick Reference
 
-- Define and enforce the runtime bootstrap contract (which assets exist, where they live, and how they are initialized).
-- Guarantee idempotent setup behavior and explicit reporting of what was created versus already present.
+| Item | Rule |
+| ------ | ------ |
+| Owned runtime paths | `agent-workflows/screening/`, `agent-workflows/screening/results/`, `agent-workflows/screening/history/`, `agent-workflows/screening/SCREENING.md` |
+| Bundled default file | `SCREENING.default.md` |
+| Overwrite behavior | If `agent-workflows/screening/SCREENING.md` already exists, leave it unchanged unless the user explicitly asks to reset or overwrite it. |
+| Scope | Bootstrap only. This skill does not inspect fund queries, save custom queries, or execute screening runs. |
 
-## Runtime Assets Owned Today
-
-- `agent-workflows/screening/`
-- `agent-workflows/screening/results/`
-- `agent-workflows/screening/history/`
-- `agent-workflows/screening/SCREENING.md`
-
-## Bundled template files in the skill's directory
-
-- `SCREENING.default.md`
-
-## Setup Flow
-
-Execute all steps defined below. Even if a step should fail, proceed to the next one and always end with the 'Final Step'
-
-### Step 1: Setup Token Screening
+## Procedure
 
 1. Ensure `agent-workflows/screening/`, `agent-workflows/screening/results/`, and `agent-workflows/screening/history/` exist.
-2. If `agent-workflows/screening/SCREENING.md` does not exist, create it from this skill's bundled `SCREENING.default.md`.
-3. If the runtime file already exists, leave it unchanged unless the user explicitly asks to reset or overwrite it.
+2. If `agent-workflows/screening/SCREENING.md` does not exist, create it from the bundled `SCREENING.default.md`.
+3. If the runtime file already exists, leave it intact unless the user explicitly asks to reset it.
+4. Report exactly which paths were created, which already existed, and whether `SCREENING.md` was created or left unchanged.
 
-### Final Step
+## Common Mistakes
 
-1. Report exactly which paths were created, which already existed, and whether the runtime workflow file was created or left intact.
-  
-## Boundaries
-
-- **Bootstrap only:** This skill prepares runtime workspace files and directories. It does not inspect fund policy, save profiles, or execute screening runs.
-- **Idempotent behavior:** Re-running setup must be safe. Existing directories remain in place and existing runtime files are not overwritten by default.
-- **No silent reset:** Do not replace an existing runtime files with a template unless the user explicitly asks for that reset.
-- **No invented assets:** Create only the runtime assets defined above. Do not add extra workflow files, result artifacts, or policy content that the bundled default does not define.
+- Using this skill for configuration or execution work. It only bootstraps runtime files.
+- Overwriting an existing `SCREENING.md` without an explicit user request.
+- Creating extra workflow assets beyond the runtime paths this skill owns.
+- Failing to report what was created versus what already existed.
