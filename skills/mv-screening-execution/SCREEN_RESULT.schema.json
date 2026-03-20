@@ -29,7 +29,8 @@
         "type": "object",
         "required": [
           "run_id",
-          "status"
+          "status",
+          "scope"
         ],
         "properties": {
           "run_id": {
@@ -47,21 +48,28 @@
             ]
           },
           "scope": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "universe",
+              "holdings"
+            ]
           },
           "result_count": {
             "type": "integer",
             "minimum": 0
           },
           "reason": {
-            "type": "string"
+            "type": "string",
+            "description": "When status is not executed, explain why. When executed, optional short note on what this run surfaced (indicator focus); not a substitute for per-candidate candidate_reason."
           }
         },
         "additionalProperties": true
       }
     },
     "candidates": {
+      "description": "Universe-discovery shortlist only: include a token only if at least one executed run used scope universe. Do not promote holdings-only screens into candidates.",
       "type": "array",
+      "maxItems": 10,
       "items": {
         "type": "object",
         "required": [
@@ -81,7 +89,8 @@
           },
           "candidate_reason": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "Substantive justification: name specific DD indicators, scores, or filter outcomes from screen results for this token—not only template/query id (that belongs in source_run_ids). Cite values, bands, or rank basis where possible."
           },
           "source_run_ids": {
             "type": "array",
@@ -103,7 +112,8 @@
             "type": "string"
           },
           "indicator_snapshot": {
-            "type": "object"
+            "type": "object",
+            "description": "Optional excerpt of indicator fields from the screen result row to support candidate_reason without pasting long prose."
           }
         },
         "additionalProperties": true
