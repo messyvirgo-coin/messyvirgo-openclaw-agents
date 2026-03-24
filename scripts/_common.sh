@@ -30,16 +30,16 @@ require_cmd() {
 resolve_target_paths() {
   local target="$1"
   case "$target" in
-    wrapper)
+    secure)
       CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-$HOME/.openclaw-secure}"
       WORKSPACES_DIR="${OPENCLAW_WORKSPACES_DIR:-$HOME/OpenClawWorkspaces}"
       ;;
-    openclaw)
+    raw)
       CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-$HOME/.openclaw}"
-      WORKSPACES_DIR="${OPENCLAW_WORKSPACES_DIR:-$HOME/.openclaw/workspaces}"
+      WORKSPACES_DIR="${OPENCLAW_WORKSPACES_DIR:-$HOME/OpenClawWorkspaces}"
       ;;
     *)
-      die "Unknown target '$target' (expected wrapper|openclaw)"
+      die "Unknown target '$target' (expected secure|raw)"
       ;;
   esac
 }
@@ -48,14 +48,14 @@ runtime_config_dir_for_target() {
   local target="$1"
   local host_config_dir="$2"
   case "$target" in
-    wrapper)
+    secure)
       echo "/home/node/.openclaw"
       ;;
-    openclaw)
+    raw)
       echo "$host_config_dir"
       ;;
     *)
-      die "Unknown target '$target' (expected wrapper|openclaw)"
+      die "Unknown target '$target' (expected secure|raw)"
       ;;
   esac
 }

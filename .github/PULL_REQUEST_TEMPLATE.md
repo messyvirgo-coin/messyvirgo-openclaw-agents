@@ -13,13 +13,13 @@
 ## How to test
 
 - Provide exact commands you ran.
-- Include relevant environment details when needed (OS, OpenClaw target type, wrapper/plain mode).
+- Include relevant environment details when needed (OS, OpenClaw target type, secure/raw mode).
 
 Example:
 
 ```bash
-./scripts/install.sh --target wrapper
-./scripts/update.sh --target wrapper
+./scripts/install.sh --target secure
+./scripts/update.sh --target secure
 ```
 
 ## Checklist

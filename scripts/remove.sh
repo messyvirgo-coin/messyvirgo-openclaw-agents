@@ -5,14 +5,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/_common.sh"
 
-TARGET="wrapper"
+TARGET="secure"
 PURGE_STATE=0
 BUNDLE=""
 PROFILE=""
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/remove.sh [--target wrapper|openclaw] [--bundle <name>] [--purge-state]
+Usage: ./scripts/remove.sh [--target secure|raw] [--bundle <name>] [--purge-state]
 
 Removes files managed by this pack. Stateful workspace files are preserved unless
 --purge-state is explicitly set.

@@ -8,7 +8,7 @@ It owns:
 - global runtime config fragments and `mcporter.json` template
 - reusable agent workspace templates and metadata
 - optional agent bundles for selective deployment
-- install/update/remove scripts for both secure-wrapper and plain OpenClaw targets
+- install/update/remove scripts for both secure (Docker) and raw (native) targets
 
 It does not own:
 
@@ -35,7 +35,7 @@ Those docs cover:
 
 - `skills/`: skills loaded instance-wide; use subfolders like `skills/mv-t1-mngr/` for agent-specific skills (see `skills/README.md`)
 - `runtime/`: global OpenClaw runtime fragments and `mcporter.json` template
-- `agents/`: **source of truth** — agent registry (`registry.json`) and workspace templates (e.g. `agents/mv-t1-mngr/*.md` plus optional `soul.json`). Install/update scripts copy these into the target’s workspaces directory; the live workspaces live under the OpenClaw config (e.g. `~/.openclaw/workspaces` or wrapper paths), not in this repo.
+- `agents/`: **source of truth** — agent registry (`registry.json`) and workspace templates (e.g. `agents/mv-t1-mngr/*.md` plus optional `soul.json`). Install/update scripts copy these into the target’s workspaces directory; the live workspaces live under `~/OpenClawWorkspaces` (both secure and raw modes), or the path set by `OPENCLAW_WORKSPACES_DIR`.
 - `bundles/`: optional agent-only deployment selectors (e.g. `mv-t1` bundle picks which agents from the registry get installed)
 
 ## SoulSpec vs OpenClaw Files
@@ -55,7 +55,7 @@ After the client is installed and configured, install this pack from this repo. 
 cp .env.example .env
 # Edit .env and set real values; do not commit .env
 
-## Option B: client wrapper env (when using the wrapper)
+## Option B: client env (when using secure mode)
 set -a
 source ../messyvirgo-openclaw-client/.env
 set +a
@@ -65,66 +65,65 @@ export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
 export MESSY_VIRGO_API_KEY="your-api-key"
 
 ## Install
-./scripts/install.sh --target wrapper
+./scripts/install.sh --target secure
 ```
 
 Install only a selected bundle:
 
 ```bash
-./scripts/install.sh --target wrapper --bundle mv-t1
+./scripts/install.sh --target secure --bundle mv-t1
 ```
 
-Restart the wrapper after install/update so runtime files are reloaded:
+Restart the secure deployment after install/update so runtime files are reloaded:
 
 ```bash
 cd ../messyvirgo-openclaw-client
-./scripts/down.sh
-./scripts/up.sh
+./openclaw-secure/scripts/down.sh
+./openclaw-secure/scripts/up.sh
 ```
 
 Update managed files in place:
 
 ```bash
 # load env first (Option A or B above), then:
-./scripts/update.sh --target wrapper
+./scripts/update.sh --target secure
 ```
 
 Update only a selected bundle:
 
 ```bash
-./scripts/update.sh --target wrapper --bundle mv-t1
+./scripts/update.sh --target secure --bundle mv-t1
 ```
 
 Remove only pack-managed files:
 
 ```bash
-./scripts/remove.sh --target wrapper
+./scripts/remove.sh --target secure
 ```
 
 Remove one bundle while keeping shared global assets:
 
 ```bash
-./scripts/remove.sh --target wrapper --bundle mv-t1
+./scripts/remove.sh --target secure --bundle mv-t1
 ```
 
 Install into a plain OpenClaw deployment:
 
 ```bash
-./scripts/install.sh --target openclaw
+./scripts/install.sh --target raw
 ```
 
 ## Plain OpenClaw
 
-If you are not using the Messy Virgo wrapper client and instead run plain
-OpenClaw directly, use this repo as a pack overlay on top of your existing
-OpenClaw instance.
+If you use openclaw-raw (native) or run plain OpenClaw directly, use this repo
+as a pack overlay on top of your existing OpenClaw instance.
 
 Install into a plain OpenClaw target:
 
 ```bash
 export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
 export MESSY_VIRGO_API_KEY="your-api-key"
-./scripts/install.sh --target openclaw
+./scripts/install.sh --target raw
 ```
 
 Update later:
@@ -132,25 +131,25 @@ Update later:
 ```bash
 export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
 export MESSY_VIRGO_API_KEY="your-api-key"
-./scripts/update.sh --target openclaw
+./scripts/update.sh --target raw
 ```
 
 Remove pack-managed files:
 
 ```bash
-./scripts/remove.sh --target openclaw
+./scripts/remove.sh --target raw
 ```
 
 Remove one bundle while keeping shared global assets:
 
 ```bash
-./scripts/remove.sh --target openclaw --bundle mv-t1
+./scripts/remove.sh --target raw --bundle mv-t1
 ```
 
-In plain OpenClaw mode, target paths default to:
+In raw mode, target paths default to:
 
 - config: `~/.openclaw`
-- workspaces: `~/.openclaw/workspaces`
+- workspaces: `~/OpenClawWorkspaces`
 
 For channels, bindings, and pairing, use the plain OpenClaw CLI directly:
 
@@ -175,9 +174,9 @@ The pack uses MCP runtime values from environment variables (e.g. for funds MCP 
 - `MESSY_VIRGO_MCP_URL`
 - `MESSY_VIRGO_API_KEY`
 
-Set them in your shell (or wrapper `.env`) before running install/update.
+Set them in your shell (or the secure deployment `.env`) before running install/update.
 These values are rendered into managed `mcporter.json` during pack install/update.
-For wrapper installs, this is a single global runtime config at
+For secure installs, this is a single global runtime config at
 `$OPENCLAW_CONFIG_DIR/mcporter.json` (default: `~/.openclaw-secure/mcporter.json`);
 per-workspace `config/mcporter.json` files are not required.
 

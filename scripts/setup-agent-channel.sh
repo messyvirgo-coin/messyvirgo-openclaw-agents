@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/_common.sh"
 
-TARGET="wrapper"
+TARGET="secure"
 CHANNEL="telegram"
 AGENT_ID="mv-t1-mngr"
 CLIENT_REPO="${CLIENT_REPO:-$HOME/Git/messyvirgo-openclaw-client}"
@@ -20,10 +20,10 @@ Usage: ./scripts/setup-agent-channel.sh [options]
 Generic channel setup helper for pack-managed agents.
 
 Options:
-  --target wrapper|openclaw   Runtime mode (default: wrapper)
+  --target secure|raw   Runtime mode (default: secure)
   --channel <name>            Channel id (default: telegram)
   --agent <id>                Agent id to bind (default: mv-t1-mngr)
-  --client-repo <path>        Wrapper repo path for cli.sh (wrapper mode)
+  --client-repo <path>        Path to messyvirgo-openclaw-client repo (contains openclaw-secure/ and openclaw-raw/)
   --token <token>             Inline token for channels add
   --token-file <path>         Token file path (if channel supports it)
   --use-env                   Use env-based token resolution
@@ -32,7 +32,7 @@ Options:
 Examples:
   ./scripts/setup-agent-channel.sh --agent mv-t1-mngr
   ./scripts/setup-agent-channel.sh --agent mv-t1-mngr --token "$TELEGRAM_BOT_TOKEN"
-  ./scripts/setup-agent-channel.sh --target openclaw --agent mv-t1-mngr --use-env
+  ./scripts/setup-agent-channel.sh --target raw --agent mv-t1-mngr --use-env
 EOF
 }
 
@@ -86,13 +86,30 @@ if [[ "$USE_ENV" == "1" && ( -n "$TOKEN" || -n "$TOKEN_FILE" ) ]]; then
   die "--use-env cannot be combined with --token/--token-file"
 fi
 
+# Resolve CLI: secure -> openclaw-secure; raw -> openclaw-raw if present, else openclaw
+case "$TARGET" in
+  secure)
+    CLI_PATH="$CLIENT_REPO/openclaw-secure/scripts/cli.sh"
+    [[ -x "$CLI_PATH" ]] || die "Missing secure CLI at $CLI_PATH"
+    ;;
+  raw)
+    if [[ -x "$CLIENT_REPO/openclaw-raw/scripts/cli.sh" ]]; then
+      CLI_PATH="$CLIENT_REPO/openclaw-raw/scripts/cli.sh"
+    else
+      CLI_PATH="openclaw"
+      require_cmd openclaw
+    fi
+    ;;
+  *)
+    die "Unknown target '$TARGET' (expected secure|raw)"
+    ;;
+esac
+
 run_cli() {
-  if [[ "$TARGET" == "wrapper" ]]; then
-    [[ -x "$CLIENT_REPO/scripts/cli.sh" ]] || die "Missing wrapper CLI at $CLIENT_REPO/scripts/cli.sh"
-    "$CLIENT_REPO/scripts/cli.sh" "$@"
-  else
-    require_cmd openclaw
+  if [[ "$CLI_PATH" == "openclaw" ]]; then
     openclaw "$@"
+  else
+    "$CLI_PATH" "$@"
   fi
 }
 
@@ -122,9 +139,9 @@ Done.
 
 Next steps:
   1) Verify binding:
-       $( [[ "$TARGET" == "wrapper" ]] && echo "$CLIENT_REPO/scripts/cli.sh" || echo "openclaw" ) agents bindings
+       $CLI_PATH agents bindings
 
   2) Approve first-time DM pairing:
-       $( [[ "$TARGET" == "wrapper" ]] && echo "$CLIENT_REPO/scripts/cli.sh" || echo "openclaw" ) pairing list $CHANNEL
-       $( [[ "$TARGET" == "wrapper" ]] && echo "$CLIENT_REPO/scripts/cli.sh" || echo "openclaw" ) pairing approve $CHANNEL <CODE>
+       $CLI_PATH pairing list $CHANNEL
+       $CLI_PATH pairing approve $CHANNEL <CODE>
 EOF
