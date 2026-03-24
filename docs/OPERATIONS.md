@@ -41,7 +41,7 @@ Do not rely on dashboard-only edits for these credentials.
 If you do not want a repo-local `.env`, you can still export the variables in
 your current shell before running the scripts.
 
-## Wrapper workflow
+## Secure workflow
 
 Install the Team 1 bundle:
 
@@ -89,7 +89,7 @@ cd ../messyvirgo-openclaw-client
 ./openclaw-secure/scripts/up.sh
 ```
 
-## Plain OpenClaw workflow
+## Raw workflow
 
 Install the Team 1 bundle:
 
@@ -137,7 +137,7 @@ shipped. `update.sh` does not automatically delete those stale files.
 Use this flow when the pack removed agents, removed skills, or stopped shipping
 some workspace files.
 
-### Wrapper
+### Secure
 
 1. Update the bundle:
 
@@ -169,7 +169,7 @@ cd ../messyvirgo-openclaw-client
 ./openclaw-secure/scripts/up.sh
 ```
 
-### Plain OpenClaw
+### Raw
 
 1. Update the bundle:
 

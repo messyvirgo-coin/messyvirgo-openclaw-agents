@@ -174,7 +174,7 @@ The pack uses MCP runtime values from environment variables (e.g. for funds MCP 
 - `MESSY_VIRGO_MCP_URL`
 - `MESSY_VIRGO_API_KEY`
 
-Set them in your shell (or wrapper `.env`) before running install/update.
+Set them in your shell (or the secure deployment `.env`) before running install/update.
 These values are rendered into managed `mcporter.json` during pack install/update.
 For secure installs, this is a single global runtime config at
 `$OPENCLAW_CONFIG_DIR/mcporter.json` (default: `~/.openclaw-secure/mcporter.json`);
