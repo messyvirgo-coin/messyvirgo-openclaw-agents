@@ -2,15 +2,23 @@
 
 ## Targets
 
-- `wrapper`: secure-wrapper deployment defaults
+- `secure`: openclaw-secure (Docker) deployment
   - config: `~/.openclaw-secure`
   - workspaces: `~/OpenClawWorkspaces`
-- `openclaw`: plain OpenClaw defaults
+- `raw`: openclaw-raw (native) deployment
   - config: `~/.openclaw`
-  - workspaces: `~/.openclaw/workspaces`
+  - workspaces: `~/OpenClawWorkspaces`
 
 If you use custom locations, set `OPENCLAW_CONFIG_DIR` and/or
 `OPENCLAW_WORKSPACES_DIR` before running the scripts.
+
+### Migration from older plain OpenClaw installs
+
+If pack files were previously written under `~/.openclaw/workspaces`, you can
+preserve that layout by
+setting `OPENCLAW_WORKSPACES_DIR=$HOME/.openclaw/workspaces` before future
+install/update runs. Otherwise, new installs use `~/OpenClawWorkspaces` to
+match the messyvirgo-openclaw-client native defaults.
 
 ## Recommended env setup
 
@@ -38,47 +46,47 @@ your current shell before running the scripts.
 Install the Team 1 bundle:
 
 ```bash
-./scripts/install.sh --target wrapper --bundle mv-t1
+./scripts/install.sh --target secure --bundle mv-t1
 ```
 
 Update the Team 1 bundle:
 
 ```bash
-./scripts/update.sh --target wrapper --bundle mv-t1
+./scripts/update.sh --target secure --bundle mv-t1
 ```
 
 Install or update everything in the pack:
 
 ```bash
-./scripts/install.sh --target wrapper
-./scripts/update.sh --target wrapper
+./scripts/install.sh --target secure
+./scripts/update.sh --target secure
 ```
 
 Remove the Team 1 bundle but keep shared pack assets:
 
 ```bash
-./scripts/remove.sh --target wrapper --bundle mv-t1
+./scripts/remove.sh --target secure --bundle mv-t1
 ```
 
 Remove all pack-managed files but keep stateful workspace files:
 
 ```bash
-./scripts/remove.sh --target wrapper
+./scripts/remove.sh --target secure
 ```
 
 Remove pack-managed files and also purge stateful workspace files:
 
 ```bash
-./scripts/remove.sh --target wrapper --purge-state
+./scripts/remove.sh --target secure --purge-state
 ```
 
-Restart wrapper services after install or update so config/runtime changes are
+Restart secure services after install or update so config/runtime changes are
 picked up:
 
 ```bash
 cd ../messyvirgo-openclaw-client
-./scripts/down.sh
-./scripts/up.sh
+./openclaw-secure/scripts/down.sh
+./openclaw-secure/scripts/up.sh
 ```
 
 ## Plain OpenClaw workflow
@@ -86,32 +94,32 @@ cd ../messyvirgo-openclaw-client
 Install the Team 1 bundle:
 
 ```bash
-./scripts/install.sh --target openclaw --bundle mv-t1
+./scripts/install.sh --target raw --bundle mv-t1
 ```
 
 Update the Team 1 bundle:
 
 ```bash
-./scripts/update.sh --target openclaw --bundle mv-t1
+./scripts/update.sh --target raw --bundle mv-t1
 ```
 
 Install or update everything in the pack:
 
 ```bash
-./scripts/install.sh --target openclaw
-./scripts/update.sh --target openclaw
+./scripts/install.sh --target raw
+./scripts/update.sh --target raw
 ```
 
 Remove the Team 1 bundle:
 
 ```bash
-./scripts/remove.sh --target openclaw --bundle mv-t1
+./scripts/remove.sh --target raw --bundle mv-t1
 ```
 
 Remove all pack-managed files:
 
 ```bash
-./scripts/remove.sh --target openclaw
+./scripts/remove.sh --target raw
 ```
 
 ## What install/update changes
@@ -134,7 +142,7 @@ some workspace files.
 1. Update the bundle:
 
 ```bash
-./scripts/update.sh --target wrapper --bundle mv-t1
+./scripts/update.sh --target secure --bundle mv-t1
 ```
 
 1. Remove retired agent workspaces:
@@ -153,12 +161,12 @@ rm -f ~/OpenClawWorkspaces/mv-t1-mngr/TOOLS.md \
   ~/OpenClawWorkspaces/mv-t1-mngr/MEMORY.md
 ```
 
-1. Restart the wrapper:
+1. Restart the secure deployment:
 
 ```bash
 cd ../messyvirgo-openclaw-client
-./scripts/down.sh
-./scripts/up.sh
+./openclaw-secure/scripts/down.sh
+./openclaw-secure/scripts/up.sh
 ```
 
 ### Plain OpenClaw
@@ -166,23 +174,23 @@ cd ../messyvirgo-openclaw-client
 1. Update the bundle:
 
 ```bash
-./scripts/update.sh --target openclaw --bundle mv-t1
+./scripts/update.sh --target raw --bundle mv-t1
 ```
 
 1. Remove retired agent workspaces:
 
 ```bash
-rm -rf ~/.openclaw/workspaces/mv-t1-coder \
-  ~/.openclaw/workspaces/mv-t1-planner \
-  ~/.openclaw/workspaces/mv-t1-researcher \
-  ~/.openclaw/workspaces/mv-t1-funds
+rm -rf ~/OpenClawWorkspaces/mv-t1-coder \
+  ~/OpenClawWorkspaces/mv-t1-planner \
+  ~/OpenClawWorkspaces/mv-t1-researcher \
+  ~/OpenClawWorkspaces/mv-t1-funds
 ```
 
 1. Remove stale files from the remaining manager workspace if they still exist:
 
 ```bash
-rm -f ~/.openclaw/workspaces/mv-t1-mngr/TOOLS.md \
-  ~/.openclaw/workspaces/mv-t1-mngr/MEMORY.md
+rm -f ~/OpenClawWorkspaces/mv-t1-mngr/TOOLS.md \
+  ~/OpenClawWorkspaces/mv-t1-mngr/MEMORY.md
 ```
 
 If you use custom workspace paths, run the same cleanup inside
@@ -193,11 +201,11 @@ If you use custom workspace paths, run the same cleanup inside
 If you want to fully reset the surviving agent to the current pack templates:
 
 ```bash
-./scripts/remove.sh --target wrapper --bundle mv-t1 --purge-state
-./scripts/install.sh --target wrapper --bundle mv-t1
+./scripts/remove.sh --target secure --bundle mv-t1 --purge-state
+./scripts/install.sh --target secure --bundle mv-t1
 ```
 
-Then remove stale workspaces/files as shown above and restart the wrapper.
+Then remove stale workspaces/files as shown above and restart the secure deployment.
 
 ## Post-install model assignment
 
@@ -209,32 +217,44 @@ default model of the target instance.
 
 ## Telegram setup via OpenClaw CLI
 
-Add Telegram and bind it to `mv-t1-mngr`:
+Add Telegram and bind it to `mv-t1-mngr`.
+
+**Secure (openclaw-secure):**
 
 ```bash
 export TELEGRAM_BOT_TOKEN="your-bot-token"
-../messyvirgo-openclaw-client/scripts/cli.sh channels add --channel telegram --token "$TELEGRAM_BOT_TOKEN"
-../messyvirgo-openclaw-client/scripts/cli.sh agents bind --agent mv-t1-mngr --bind telegram
+../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh channels add --channel telegram --token "$TELEGRAM_BOT_TOKEN"
+../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh agents bind --agent mv-t1-mngr --bind telegram
 ```
 
-If CLI access is blocked by local `pairing required`, approve device pairing:
+If CLI access is blocked by local `pairing required`, approve device pairing (secure mode only):
 
 ```bash
-../messyvirgo-openclaw-client/scripts/cli.sh devices list
-../messyvirgo-openclaw-client/scripts/cli.sh devices approve <REQUEST_ID>
+../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh devices list
+../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh devices approve <REQUEST_ID>
+```
+
+**Raw (openclaw-raw / native):**
+
+```bash
+export TELEGRAM_BOT_TOKEN="your-bot-token"
+../messyvirgo-openclaw-client/openclaw-raw/scripts/cli.sh channels add --channel telegram --token "$TELEGRAM_BOT_TOKEN"
+../messyvirgo-openclaw-client/openclaw-raw/scripts/cli.sh agents bind --agent mv-t1-mngr --bind telegram
 ```
 
 Complete Telegram DM pairing:
 
 ```bash
 # send /start or "hi" to your bot in Telegram first
-../messyvirgo-openclaw-client/scripts/cli.sh pairing list --channel telegram
-../messyvirgo-openclaw-client/scripts/cli.sh pairing approve telegram <CODE> --notify
+../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh pairing list --channel telegram
+../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh pairing approve telegram <CODE> --notify
 ```
+
+(For raw mode, use `openclaw-raw/scripts/cli.sh` instead of `openclaw-secure/scripts/cli.sh`.)
 
 Verify:
 
 ```bash
-../messyvirgo-openclaw-client/scripts/cli.sh agents bindings
-../messyvirgo-openclaw-client/scripts/cli.sh agent --agent mv-t1-mngr --message "State your name in one sentence."
+../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh agents bindings
+../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh agent --agent mv-t1-mngr --message "State your name in one sentence."
 ```

@@ -5,14 +5,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/_common.sh"
 
-TARGET="wrapper"
+TARGET="secure"
 BUNDLE=""
 PROFILE=""
 SYNC=0
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/install.sh [--target wrapper|openclaw] [--bundle <name>] [--sync]
+Usage: ./scripts/install.sh [--target secure|raw] [--bundle <name>] [--sync]
 
 Installs shared runtime assets and agent workspace templates into a target OpenClaw instance.
 Defaults to all agents when --bundle is not provided.

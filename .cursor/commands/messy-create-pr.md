@@ -142,7 +142,7 @@ Format: `{prefix}: {Description} (#{GitHub-Issue})` (GitHub issue number optiona
 
    **How to Review/Test:**
    - Based on changed files: suggest what to test (e.g., install/update/remove flow, bundle selection, generated agent files)
-   - Include exact commands and target mode (`wrapper` vs `plain`) when relevant
+   - Include exact commands and target mode (`secure` vs `raw`) when relevant
 
    **Key Decisions & Tradeoffs:**
    - Extract from commit message bodies if they contain design notes

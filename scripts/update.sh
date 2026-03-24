@@ -5,13 +5,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/_common.sh"
 
-TARGET="wrapper"
+TARGET="secure"
 BUNDLE=""
 PROFILE=""
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/update.sh [--target wrapper|openclaw] [--bundle <name>]
+Usage: ./scripts/update.sh [--target secure|raw] [--bundle <name>]
 
 Updates managed pack files while preserving stateful workspace files.
 Defaults to all agents when --bundle is not provided.

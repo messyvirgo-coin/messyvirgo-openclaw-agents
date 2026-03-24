@@ -38,7 +38,7 @@ body:
       label: Environment
       placeholder: |
         - OS:
-        - OpenClaw mode (wrapper/plain):
+        - OpenClaw mode (secure/raw):
         - Command(s) run:
     validations:
       required: true
