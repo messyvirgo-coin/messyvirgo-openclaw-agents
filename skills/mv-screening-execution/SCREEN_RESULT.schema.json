@@ -6,9 +6,12 @@
   "required": [
     "schema_version",
     "fund_id",
+    "sleeve_id",
     "generated_at_utc",
+    "screen_run_id",
     "runs",
-    "candidates"
+    "candidates",
+    "workflow"
   ],
   "properties": {
     "schema_version": {
@@ -19,9 +22,50 @@
       "type": "string",
       "minLength": 1
     },
+    "sleeve_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "screen_run_id": {
+      "type": "string",
+      "description": "Immutable fund_screen_runs id returned by create_fund_screen_run."
+    },
     "generated_at_utc": {
       "type": "string",
       "format": "date-time"
+    },
+    "workflow": {
+      "type": "object",
+      "required": ["version", "steps"],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["kind", "id"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["template", "query"]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "instructions": {
+      "type": "string",
+      "description": "Freeform sleeve screening instructions from fund_sleeves.meta.screening; sibling of workflow, matching SleeveScreeningContextResponse."
     },
     "runs": {
       "type": "array",
@@ -73,19 +117,28 @@
       "items": {
         "type": "object",
         "required": [
-          "token_id",
-          "symbol",
+          "chain",
+          "contract_address",
+          "rank",
           "candidate_reason",
           "source_run_ids"
         ],
         "properties": {
-          "token_id": {
+          "chain": {
             "type": "string",
             "minLength": 1
           },
-          "symbol": {
+          "contract_address": {
             "type": "string",
             "minLength": 1
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "symbol": {
+            "type": "string"
           },
           "candidate_reason": {
             "type": "string",
@@ -103,12 +156,6 @@
             "type": "string"
           },
           "name": {
-            "type": "string"
-          },
-          "chain": {
-            "type": "string"
-          },
-          "contract_address": {
             "type": "string"
           },
           "indicator_snapshot": {

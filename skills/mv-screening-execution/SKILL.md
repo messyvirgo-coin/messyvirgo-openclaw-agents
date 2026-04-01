@@ -1,117 +1,110 @@
 ---
 name: mv-screening-execution
-description: Use when running or rerunning a token screen for a specific Messy Virgo (MV / MESSY) fund for a given calendar day, or when a fund screening workflow needs to be executed and its results persisted to the platform.
+description: Use when running or rerunning a configured token screen for a specific Messy Virgo fund sleeve on a specific screen date.
 ---
 
 # Screening Execution
 
 ## Overview
 
-This skill runs one fund's configured token screening process for a specific day. Read `SCREENING.md` as the recipe, combine it with the fund's screening context, execute each valid run, build a universe-only shortlist of up to ten candidates, persist the daily result to the platform, and write one Markdown summary under `agent-workflows/screening/results/`.
+Run one sleeve's configured screening workflow for one day using canonical context from `fund_sleeves.meta.screening`. Require explicit ids, execute each workflow step, build a universe-only shortlist of up to ten candidates, and persist one immutable run with `create_fund_screen_run`.
 
-Missing inputs, unresolved references, and validation failures must be reported explicitly. Do not guess values, infer a fund, or invent template/query ids.
+Missing inputs, unresolved references, and validation failures must be reported explicitly. Do not guess fund ids, sleeve ids, conditional values, or template/query ids.
 
 ## When to Use
 
-- A scheduled or manual screening run is triggered for one fund.
-- The user wants to run or rerun that fund's configured token screen.
-- The user wants that day's shortlist and persisted screen result for one fund.
-- The user wants to process today's screening results and save them to the platform.
+- A scheduled or manual screening run is triggered for one fund sleeve and one date.
+- The user wants to run or rerun that sleeve's configured token screen.
+- The user wants the results persisted as one immutable screening run with shortlist and narrative.
 
 ## When Not to Use
 
-- Do not use this skill to create the runtime workspace. That belongs to `mv-agent-setup`.
-- Do not use this skill to edit `SCREENING.md`, templates, or saved custom queries. That belongs to `mv-screening-configuration`.
-- Do not use this skill for generic template/query inspection without executing a screen.
+- Runtime/bootstrap setup belongs to `mv-agent-setup`.
+- Editing templates or saved screening context belongs to `mv-screening-configuration`.
+- Generic template/query inspection without execution does not need this skill.
 
-## Prerequisites
+## Required Inputs
 
-- The exact `fund_id` must be explicit before execution starts.
-- Do not guess the fund from a name, nickname, prior example, or "first accessible" fallback.
-- The runtime workspace must already exist. If `agent-workflows/screening/SCREENING.md` or required directories are missing, stop and tell the user to run `mv-agent-setup` first.
+- Require explicit `fund_id`, `sleeve_id`, and target screen day before sleeve-specific work starts.
+- If `sleeve_id` is unknown, call `list_fund_sleeves(fund_id)`.
+- Do not infer a fund or sleeve from names, nicknames, examples, or "first accessible" fallbacks.
 
 ## Core Workflow
 
-1. Require an explicit `fund_id` and target screen day before doing fund-specific work.
-2. Read `agent-workflows/screening/SCREENING.md` and load fund screening context for templates and saved custom queries.
-3. Resolve each `template:<id>` and `query:<id>` reference, and mark runs with missing inputs or invalid refs instead of inventing fixes.
-4. Execute each valid run with `screen_fund_tokens`, recording `scope`, status, and the resolved request. If a run returns `failed_error`, record it with that status and continue to the remaining runs.
-5. Aggregate candidates only from executed `scope: universe` runs (see **Candidate eligibility** below), dedupe by `token_id`, assign a unique `rank` (1–10), and write substantive `candidate_reason` text per **Reasoning standards**.
-6. Persist the day with `upsert_fund_token_screen`, then write one Markdown summary at `agent-workflows/screening/results/{screen_date}_{fund_id}.md`. The API is the canonical store; the Markdown file is the default operator-facing note.
+1. Load sleeve context with `get_sleeve_screening_context(fund_id, sleeve_id)`.
+2. Resolve each `template:<id>` and `query:<id>` from the canonical context. Missing refs become `failed_validation`.
+3. Execute each valid step with `screen_sleeve_tokens`, recording `ref`, `scope`, status, intent, and resolved request. Missing runtime inputs become `skipped_missing_input`. Tool errors become `failed_error`, then continue to the remaining runs.
+4. Aggregate candidates only from executed `scope: universe` runs. Dedupe by `(chain, contract_address)`, assign unique `rank` values `1..10`, and write evidence-based `candidate_reason` text.
+5. Persist with `create_fund_screen_run` using `process_narrative`, structured `execution_trace`, `run_catalog`, and up to ten candidates.
 
-## Candidate Eligibility
+## mcporter Safety
 
+Use this section only when invoking tools through `mcporter call` in a shell. Structured MCP clients are unaffected.
+
+- Prefer named arguments for every tool parameter: `fund_id=...`, `sleeve_id=...`, `scope=...`.
+- Prefer `server.tool` dot notation so the tool target is one token: `messy-virgo-funds.screen_sleeve_tokens`.
+- Avoid positional `fund_id sleeve_id scope` when you also pass flags or JSON. We have seen mcporter over-hydrate positionals and fail with `too many positional arguments`.
+- Single-quote JSON for `filters`, `fields`, `execution_trace`, `run_catalog`, and similar fields.
+- `execution_trace` must be structured JSON, not prose. Put human-readable reasoning in `process_narrative`.
+- Keep `order_by` values that start with `-` as one token: `order_by="-score_performance_final"`.
+
+```bash
+# Good: dot notation + named args + single-quoted JSON
+mcporter call messy-virgo-funds.screen_sleeve_tokens \
+  fund_id=mvf-example \
+  sleeve_id=mvs-example-1 \
+  scope=universe \
+  snapshot_date=2026-04-01 \
+  filters='[{"field":"score_performance_final","op":"gte","value":65}]' \
+  order_by="-score_performance_final" \
+  fields='["score_performance_final","score_social_final"]' \
+  limit=20
+
+# Good: structured JSON persistence payloads
+mcporter call messy-virgo-funds.create_fund_screen_run \
+  fund_id=mvf-example \
+  sleeve_id=mvs-example-1 \
+  snapshot_date=2026-04-01 \
+  process_narrative='Merged two universe runs, skipped one missing input, and ranked ten candidates by DD strength.' \
+  execution_trace='[{"ref":"query:example","scope":"universe","status":"executed"}]' \
+  run_catalog='[{"ref":"query:example","scope":"universe","status":"executed","resolved_request":{}}]' \
+  candidates='[{"chain":"base","contract_address":"0x...","rank":1,"candidate_reason":"Strong momentum candidate: relative strength was very high and performance score was solid, so it looks worth deeper diligence as a possible trend-following name."}]'
 ```
-Token appeared in at least one executed scope: universe run?
-  YES → eligible for candidates (include even if also in holdings runs)
-  NO  → never add to candidates or pass to upsert_fund_token_screen
+
+If your mcporter build does not accept dotted tool names, use two tokens (`messy-virgo-funds` `screen_sleeve_tokens`) but keep named parameters.
+
+## Shortlist Rules
+
+- A token is eligible for `candidates` only if it appeared in at least one executed `scope: universe` run.
+- Holdings-only tokens never belong in `candidates`, even if they screened well.
+- `candidate_reason` must use simple words and answer three things: what stood out in the data, why that matters for this sleeve, and why the token is worth further evaluation now.
+- Use the data as evidence, not as the whole explanation: mention the 1-3 most relevant DD indicators, scores, filter outcomes, or rank drivers from the `screen_sleeve_tokens` row, then interpret them in plain language.
+- Tie the reasoning to the sleeve's intent when possible. For example: momentum sleeve, quality sleeve, defensive sleeve, or a custom instruction from the saved context.
+- Keep `candidate_reason` concise: usually 1-3 sentences, specific, and human-readable.
+- `process_narrative` must explain how the shortlist was built: run order, skips, merges, cuts, and why this final set survived.
+- `run_catalog` is the audit trail of what ran: include `ref`, `scope`, `status`, `intent`, and `resolved_request`.
+
+Reasoning example:
+
+```text
+Bad: Top from momentum_combo_v1: perf_final=70.02, social_momentum=57.65, social_final=59.15, rel_strength=88.21
+Good: Strong momentum candidate: relative strength was very high and performance was solid, so it looks worth deeper diligence as a possible trend-following name.
 ```
 
-Holdings-only tokens must never appear in `candidates` regardless of how strongly they screen.
+## Result Contract
 
-## Quick Reference
-
-| Task | Action |
-| ------ | --------- |
-| Load baseline | Read `agent-workflows/screening/SCREENING.md`. |
-| Load fund context | Call `get_fund_screening_context(fund_id)` or read `mv://funds/{fund_id}/screening-context` for templates and saved custom queries. |
-| Resolve run references | `template:<id>` resolves from the template library. `query:<id>` resolves from the fund's `custom_queries`. Missing ids must produce `failed_validation`. |
-| Handle conditions | If a run depends on unavailable input such as `risk_on`, mark it `skipped_missing_input`. Do not invent values. |
-| Execute one run | Call `screen_fund_tokens` with flat args: `fund_id`, `scope`, optional `snapshot_date`, `filters`, `order_by`, `fields`, `limit`. Record each run in `runs` with `scope` set to `universe` or `holdings`. On `failed_error`, record status and continue. |
-| Aggregate candidates | From executed `scope: universe` runs only: dedupe by `token_id`, assign `rank` 1–N (≤10, **unique per fund per day**), keep `source_run_ids`, and write **`candidate_reason`** as in **Reasoning standards**. |
-| Persist the day | Call `upsert_fund_token_screen` with `screen_date` (`YYYY-MM-DD`), **`process_narrative`** (selection story, not a copy of `run_catalog`), `execution_trace`, `run_catalog`, and **at most ten** candidates with `token_id`, `rank`, and `candidate_reason`. Overwrites any prior save that day. |
-| Write local summary | Write **exactly one** Markdown file at `agent-workflows/screening/results/{screen_date}_{fund_id}.md` unless the user explicitly asks not to. Do not create a paired JSON file. The API remains the source of truth. |
-
-## Reasoning Standards
-
-**`candidate_reason` (each shortlist token)**
-
-Must justify the row in **data terms**, not artifact terms. Cite **concrete DD indicators, scores, or filter outcomes** from the `screen_fund_tokens` **results** for that token (field names and values or clear bands/ranks). **Do not** use only "from template X" / "matched query Y"—those refs belong in `source_run_ids` and `run_catalog`; readers need **what** in the numbers drove inclusion.
-
-**`process_narrative` (whole day / whole workflow)**
-
-Describe the **selection process**: sequence of runs, how hits were merged or cut to the shortlist (up to ten), branches and skips, what each universe run contributed, and brief honest notes on other tools (macro, web) if used. **Do not** replace this with a list of query ids—`run_catalog` already records *what* ran. Narrative answers *how we chose* and *why this set*.
-
-**`run_catalog`**
-
-Per-run: ref + `scope` + intent + resolved request. The **intent** line should say what the screen was **trying to surface** (e.g. "high final performance score, liquid names"); detailed thresholds live in `resolved_request`.
-
-## Result Artifact Contract
-
-**Two output targets with different fields:**
-
-| Field | API (`upsert_fund_token_screen` candidates) | Local schema (`SCREEN_RESULT.schema.json`) |
-|-------|-------------------------------------------|--------------------------------------------|
-| `token_id` | ✅ required | ✅ required |
-| `rank` | ✅ required (1–10, unique) | optional |
-| `candidate_reason` | ✅ required | ✅ required |
-| `symbol` | — not sent | ✅ required |
-| `source_run_ids` | — not sent | ✅ required |
-| `indicator_snapshot` | — not sent | optional |
-
-Local schema reference: [`SCREEN_RESULT.schema.json`](SCREEN_RESULT.schema.json).
-
-**Run status enum:** `executed` | `skipped_missing_input` | `skipped_condition_false` | `failed_validation` | `failed_error`
-
-**Run `scope` (required):** `universe` | `holdings` for every run entry.
-
-**Platform persistence:** `upsert_fund_token_screen` / `get_fund_token_screen` (canonical store; max ten candidates per fund per day).
-
-**Local output:** single Markdown file `agent-workflows/screening/results/{screen_date}_{fund_id}.md`; do not also write a JSON file.
+- `create_fund_screen_run` persists one immutable API run plus related candidates.
+- API candidates require `chain`, `contract_address`, `rank`, and `candidate_reason`.
+- Local artifacts following `SCREEN_RESULT.schema.json` also require `source_run_ids` per candidate.
+- Run status enum: `executed` | `skipped_missing_input` | `skipped_condition_false` | `failed_validation` | `failed_error`
+- Run scope enum: `universe` | `holdings`
 
 ## Common Mistakes
 
-- Guessing the fund instead of requiring an explicit `fund_id`.
-- Treating missing runtime files as a signal to bootstrap. Setup belongs to `mv-agent-setup`, not here.
-- Inventing values for missing conditional inputs instead of marking the run `skipped_missing_input`.
-- Inventing `template:<id>` or `query:<id>` references instead of resolving real ids.
-- Putting holdings-screen tokens into `candidates` or into `upsert_fund_token_screen` when they were **only** surfaced via `scope: holdings`.
-- Omitting `rank` from candidates sent to `upsert_fund_token_screen`, or sending two candidates with the same rank.
-- Sending `symbol` or `source_run_ids` in the API payload — those fields are for the local schema artifact, not the API.
-- Stopping execution when one run returns `failed_error`; continue remaining runs and record all statuses.
-- Changing the artifact contract instead of conforming to the bundled schema.
-- Sending more than ten candidates to `upsert_fund_token_screen`.
-- Skipping the default Markdown summary, writing multiple local result files, or using a different filename than `{screen_date}_{fund_id}.md`.
-- Vague **`candidate_reason`** text that only names a template/query without indicator/score substance.
-- Treating **`process_narrative`** as a duplicate of **`run_catalog`** (ids and requests only)—it must explain **how** the shortlist was produced.
-- Treating `SCREENING.md` as the source of truth for results instead of the input recipe.
+- Using positional args through `mcporter` plus flags/JSON, which can trigger `too many positional arguments`. Use named args instead.
+- Using double-quoted JSON such as `filters="[{"field":"x"}]"`, which breaks shell parsing. Use single quotes around JSON.
+- Passing plain text like `execution_trace="workflow completed"` and hitting validation because the API expects a dict/list-shaped JSON value.
+- Writing `candidate_reason` as a score dump or query label instead of an interpreted recommendation in simple language.
+- Guessing `fund_id`, `sleeve_id`, missing conditional inputs, or unresolved `template:<id>` / `query:<id>` refs.
+- Promoting holdings-only tokens into shortlist candidates.
+- Sending duplicate or missing `rank` values, or using legacy `token_id` identity instead of `(chain, contract_address)`.
