@@ -14,7 +14,6 @@
           "exec",
           "bash",
           "process",
-          "browser",
           "cron",
           "session_status",
           "sessions_list",
