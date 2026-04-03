@@ -36,6 +36,7 @@ Missing inputs, unresolved references, and validation failures must be reported 
 3. Execute each valid step with `screen_sleeve_tokens`, recording `ref`, `scope`, status, intent, and resolved request. Missing runtime inputs become `skipped_missing_input`. Tool errors become `failed_error`, then continue to the remaining runs.
 4. Aggregate candidates only from executed `scope: universe` runs. Dedupe by `(chain, contract_address)`, assign unique `rank` values `1..10`, and write evidence-based `candidate_reason` text.
 5. Persist with `create_fund_screen_run` using `process_narrative`, structured `execution_trace`, `run_catalog`, and up to ten candidates.
+6. **Persistence gate:** the workflow MUST NOT report success until `create_fund_screen_run` returns a `screen_run_id`. If the call fails, retry once. If it still fails, report the error. Never skip persistence.
 
 ## mcporter Safety
 
@@ -76,8 +77,9 @@ If your mcporter build does not accept dotted tool names, use two tokens (`messy
 ## Shortlist Rules
 
 - A token is eligible for `candidates` only if it appeared in at least one executed `scope: universe` run.
-- Holdings-only tokens never belong in `candidates`, even if they screened well.
-- `candidate_reason` must use simple words and answer three things: what stood out in the data, why that matters for this sleeve, and why the token is worth further evaluation now.
+- Exclude any token where `membership_source` is `fund_position` or `both`. These are current holdings and must not appear as new candidates. The API will also reject them server-side.
+- Holdings-only tokens (tokens that only appeared in `scope: holdings` runs) never belong in `candidates`, even if they screened well.
+- `candidate_reason` must use simple words and answer three things: what stood out in the data, why that matters for this sleeve, and why the token is worth further evaluation now. Use full indicator names, not abbreviations or field slugs (`Social Momentum` not `social mom`, `Relative Strength` not `RS`, `Performance Score` not `perf_final`). Mention actual scores in parentheses for evidence.
 - Use the data as evidence, not as the whole explanation: mention the 1-3 most relevant DD indicators, scores, filter outcomes, or rank drivers from the `screen_sleeve_tokens` row, then interpret them in plain language.
 - Tie the reasoning to the sleeve's intent when possible. For example: momentum sleeve, quality sleeve, defensive sleeve, or a custom instruction from the saved context.
 - Keep `candidate_reason` concise: usually 1-3 sentences, specific, and human-readable.
@@ -87,8 +89,9 @@ If your mcporter build does not accept dotted tool names, use two tokens (`messy
 Reasoning example:
 
 ```text
-Bad: Top from momentum_combo_v1: perf_final=70.02, social_momentum=57.65, social_final=59.15, rel_strength=88.21
-Good: Strong momentum candidate: relative strength was very high and performance was solid, so it looks worth deeper diligence as a possible trend-following name.
+Bad:  VEE top perf/RS leader (67.67/85.78) + social mom 65 = breakout momentum play worth DD.
+Bad:  Top from momentum_combo_v1: perf_final=70.02, social_momentum=57.65
+Good: Strong momentum candidate: Relative Strength is very high (85.78) and Performance Score is solid (67.67), with Social Momentum adding conviction (65). Worth deeper diligence as a breakout momentum name for this sleeve.
 ```
 
 ## Result Contract
@@ -108,3 +111,4 @@ Good: Strong momentum candidate: relative strength was very high and performance
 - Guessing `fund_id`, `sleeve_id`, missing conditional inputs, or unresolved `template:<id>` / `query:<id>` refs.
 - Promoting holdings-only tokens into shortlist candidates.
 - Sending duplicate or missing `rank` values, or using legacy `token_id` identity instead of `(chain, contract_address)`.
+- Completing the workflow without calling `create_fund_screen_run`. Persistence is mandatory.
