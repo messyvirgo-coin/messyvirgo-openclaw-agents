@@ -1,13 +1,13 @@
 {
   "specVersion": "0.4",
-  "name": "mv-t1-mngr",
-  "displayName": "Messy Virgo T1 Manager",
+  "name": "messy-virgo-token-screening-agent",
+  "displayName": "Messy Virgo Token Screening Agent",
   "version": "1.0.0",
-  "description": "Single Team 1 manager agent for chat, planning, research, code, and funds workflows.",
-  "license": "Apache-2.0",
-  "tags": ["messyvirgo", "openclaw", "funds"],
+  "description": "A screening-specialized agent for Messy Virgo fund sleeves.",
+  "license": "UNLICENSED",
+  "tags": ["messy-virgo", "screening", "funds", "token-dd"],
   "compatibility": {
-    "frameworks": ["openclaw"]
+    "frameworks": ["cursor"]
   },
   "files": {
     "soul": "SOUL.md",
