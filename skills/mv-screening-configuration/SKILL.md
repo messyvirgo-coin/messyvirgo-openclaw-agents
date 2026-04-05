@@ -92,4 +92,4 @@ mcporter call messy-virgo-funds.replace_sleeve_screening_context --args '{
 - Inventing `template:<id>` or `query:<id>` references instead of resolving real ids.
 - Retrying validation failures with made-up selector names or operators.
 
-`mv-agent-setup` bootstraps runtime directories. `mv-screening-execution` runs the canonical sleeve context and persists immutable screen runs. This skill changes future behavior by editing the sleeve context.
+`mv-screening-execution` runs the canonical sleeve context and persists immutable screen runs. This skill changes future behavior by editing the sleeve context.

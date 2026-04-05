@@ -19,7 +19,6 @@ Missing inputs, unresolved references, and validation failures must be reported 
 
 ## When Not to Use
 
-- Runtime/bootstrap setup belongs to `mv-agent-setup`.
 - Editing templates or saved screening context belongs to `mv-screening-configuration`.
 - Generic template/query inspection without execution does not need this skill.
 
@@ -80,6 +79,7 @@ If your mcporter build does not accept dotted tool names, use two tokens (`messy
 - Exclude any token where `membership_source` is `fund_position` or `both`. These are current holdings and must not appear as new candidates. The API will also reject them server-side.
 - Holdings-only tokens (tokens that only appeared in `scope: holdings` runs) never belong in `candidates`, even if they screened well.
 - `candidate_reason` must use simple words and answer three things: what stood out in the data, why that matters for this sleeve, and why the token is worth further evaluation now. Use full indicator names, not abbreviations or field slugs (`Social Momentum` not `social mom`, `Relative Strength` not `RS`, `Performance Score` not `perf_final`). Mention actual scores in parentheses for evidence.
+- When referring to a token in `candidate_reason` or `process_narrative`, always use the token symbol if available, otherwise the token name, otherwise the contract address. NEVER mention an internal `token_id` or other database id in user-facing text.
 - Use the data as evidence, not as the whole explanation: mention the 1-3 most relevant DD indicators, scores, filter outcomes, or rank drivers from the `screen_sleeve_tokens` row, then interpret them in plain language.
 - Tie the reasoning to the sleeve's intent when possible. For example: momentum sleeve, quality sleeve, defensive sleeve, or a custom instruction from the saved context.
 - Keep `candidate_reason` concise: usually 1-3 sentences, specific, and human-readable.
@@ -110,5 +110,5 @@ Good: Strong momentum candidate: Relative Strength is very high (85.78) and Perf
 - Writing `candidate_reason` as a score dump or query label instead of an interpreted recommendation in simple language.
 - Guessing `fund_id`, `sleeve_id`, missing conditional inputs, or unresolved `template:<id>` / `query:<id>` refs.
 - Promoting holdings-only tokens into shortlist candidates.
-- Sending duplicate or missing `rank` values, or using legacy `token_id` identity instead of `(chain, contract_address)`.
+- Sending duplicate or missing `rank` values, or using legacy `token_id` identity instead of `(chain, contract_address)`. Never surface a `token_id` in a narrative summary.
 - Completing the workflow without calling `create_fund_screen_run`. Persistence is mandatory.
