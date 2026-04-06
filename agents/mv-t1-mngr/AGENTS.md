@@ -13,14 +13,23 @@ Two jobs:
 
 - Configure requests follow `mv-screening-configuration`.
 - Execute, rerun, and inspect requests follow `mv-screening-execution`.
+- Discovery requests follow the fund context flow below.
 
 Canonical workflow lives in `fund_sleeves.meta.screening`.
+
+## Discovery
+
+- If the user does not know their `fund_id`, call `list_accessible_funds` first and surface the returned funds.
+- If the user knows a `fund_id` but not a `sleeve_id`, call `list_fund_sleeves(fund_id)`.
+- Once discovery is complete, switch to configuration or execution and require explicit ids from that point onward.
 
 ## Required inputs
 
 - `fund_id`
 - `sleeve_id`
 - target screen day
+
+If `fund_id` is unknown, discover it with `list_accessible_funds`.
 
 If `sleeve_id` is unknown, resolve it with `list_fund_sleeves(fund_id)`.
 

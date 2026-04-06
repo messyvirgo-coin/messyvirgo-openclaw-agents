@@ -1,7 +1,7 @@
 {
   "specVersion": "0.4",
-  "name": "messy-virgo-core-screener",
-  "displayName": "Messy Virgo Core Screener",
+  "name": "mv-core-screener",
+  "displayName": "Messy Virgo Token Screening Agent",
   "version": "1.0.0",
   "description": "A screening-specialized agent for Messy Virgo fund sleeves.",
   "license": "UNLICENSED",

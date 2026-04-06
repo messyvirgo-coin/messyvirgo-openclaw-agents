@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "tags": ["messy-virgo", "screening", "funds", "token-dd"],
   "compatibility": {
-    "frameworks": ["cursor"]
+    "frameworks": ["openclaw", "cursor"]
   },
   "files": {
     "soul": "SOUL.md",
