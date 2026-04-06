@@ -1,6 +1,23 @@
 {
   "agents": [
     {
+      "id": "mv-core-screener",
+      "name": "Messy Virgo Core Screener",
+      "identity": { "name": "Messy Virgo Core Screener" },
+      "workspace": "/home/node/workspaces/mv-core-screener",
+      "tools": {
+        "profile": "coding",
+        "allow": ["agents_list"]
+      },
+      "skills": [
+        "mv-screening-configuration",
+        "mv-screening-execution"
+      ],
+      "heartbeat": {
+        "every": "0m"
+      }
+    },
+    {
       "id": "mv-t1-mngr",
       "name": "Messy Virgo T1 Manager",
       "identity": { "name": "Messy Virgo T1 Manager" },

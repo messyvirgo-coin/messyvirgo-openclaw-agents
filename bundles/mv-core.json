@@ -1,0 +1,7 @@
+{
+  "name": "mv-core",
+  "description": "Core Messy Virgo agents (screening and shared workflows). Prefer this bundle for new installs.",
+  "agents": [
+    "mv-core-screener"
+  ]
+}
