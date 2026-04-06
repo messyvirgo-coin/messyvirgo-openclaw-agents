@@ -6,30 +6,15 @@
       "identity": { "name": "Messy Virgo T1 Manager" },
       "workspace": "/home/node/workspaces/mv-t1-mngr",
       "tools": {
-        "allow": [
-          "read",
-          "write",
-          "edit",
-          "apply_patch",
-          "exec",
-          "bash",
-          "process",
-          "cron",
-          "session_status",
-          "sessions_list",
-          "sessions_history",
-          "sessions_send",
-          "sessions_spawn",
-          "web_search",
-          "web_fetch",
-          "memory_search",
-          "memory_get",
-          "canvas",
-          "gateway",
-          "image",
-          "message",
-          "nodes"
-        ]
+        "profile": "coding",
+        "allow": ["agents_list"]
+      },
+      "skills": [
+        "mv-screening-configuration",
+        "mv-screening-execution"
+      ],
+      "heartbeat": {
+        "every": "0m"
       }
     }
   ]

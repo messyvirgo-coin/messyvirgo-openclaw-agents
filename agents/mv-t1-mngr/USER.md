@@ -1,7 +1,8 @@
-# USER.md - Team 1 User Profile
+# USER.md - About Your Human
+
+Learn about the person you’re interacting with. Update this as you go.
 
 - **Name:**
-- **What to call them:**
 - **Timezone:**
 - **Preferences:**
 - **Notes:**
