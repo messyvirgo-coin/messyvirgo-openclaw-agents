@@ -41,16 +41,3 @@ cd ../messyvirgo-openclaw-client
 ./openclaw-secure/scripts/down.sh
 ./openclaw-secure/scripts/up.sh
 ```
-
-## Telegram Setup
-
-If you use the client repo for channel setup, bind the core screener agent by default:
-
-```bash
-openclaw channels add --channel telegram --token "$TELEGRAM_BOT_TOKEN"
-openclaw agents bind --agent mv-core-screener --bind telegram
-openclaw pairing list --channel telegram
-openclaw pairing approve telegram <CODE> --notify
-```
-
-If you still run the legacy bundle, bind `mv-t1-mngr` instead.
