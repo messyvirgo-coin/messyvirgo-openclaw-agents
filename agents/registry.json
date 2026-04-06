@@ -6,8 +6,32 @@
       "identity": { "name": "Messy Virgo Core Screener" },
       "workspace": "/home/node/workspaces/mv-core-screener",
       "tools": {
-        "profile": "coding",
-        "allow": ["agents_list"]
+        "allow": [
+          "exec",
+          "process",
+          "cron",
+          "code_execution",
+          "read",
+          "write",
+          "edit",
+          "apply_patch",
+          "sessions_list",
+          "sessions_history",
+          "sessions_send",
+          "sessions_spawn",
+          "sessions_yield",
+          "subagents",
+          "session_status",
+          "memory_search",
+          "memory_get",
+          "web_search",
+          "x_search",
+          "web_fetch",
+          "agents_list",
+          "image",
+          "tavily_search",
+          "tavily_extract"
+        ]
       },
       "skills": [
         "mv-screening-configuration",
@@ -23,8 +47,32 @@
       "identity": { "name": "Messy Virgo T1 Manager" },
       "workspace": "/home/node/workspaces/mv-t1-mngr",
       "tools": {
-        "profile": "coding",
-        "allow": ["agents_list"]
+        "allow": [
+          "exec",
+          "cron",
+          "process",
+          "code_execution",
+          "read",
+          "write",
+          "edit",
+          "apply_patch",
+          "sessions_list",
+          "sessions_history",
+          "sessions_send",
+          "sessions_spawn",
+          "sessions_yield",
+          "subagents",
+          "session_status",
+          "memory_search",
+          "memory_get",
+          "web_search",
+          "x_search",
+          "web_fetch",
+          "agents_list",
+          "image",
+          "tavily_search",
+          "tavily_extract"
+        ]
       },
       "skills": [
         "mv-screening-configuration",
