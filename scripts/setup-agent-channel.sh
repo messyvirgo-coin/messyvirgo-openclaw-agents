@@ -7,7 +7,7 @@ source "$SCRIPT_DIR/_common.sh"
 
 TARGET="secure"
 CHANNEL="telegram"
-AGENT_ID="mv-t1-mngr"
+AGENT_ID="mv-core-screener"
 CLIENT_REPO="${CLIENT_REPO:-$HOME/Git/messyvirgo-openclaw-client}"
 TOKEN=""
 TOKEN_FILE=""
@@ -22,7 +22,7 @@ Generic channel setup helper for pack-managed agents.
 Options:
   --target secure|raw   Runtime mode (default: secure)
   --channel <name>            Channel id (default: telegram)
-  --agent <id>                Agent id to bind (default: mv-t1-mngr)
+  --agent <id>                Agent id to bind (default: mv-core-screener)
   --client-repo <path>        Path to messyvirgo-openclaw-client repo (contains openclaw-secure/ and openclaw-raw/)
   --token <token>             Inline token for channels add
   --token-file <path>         Token file path (if channel supports it)
@@ -30,9 +30,10 @@ Options:
   -h, --help                  Show help
 
 Examples:
+  ./scripts/setup-agent-channel.sh
+  ./scripts/setup-agent-channel.sh --token "$TELEGRAM_BOT_TOKEN"
+  ./scripts/setup-agent-channel.sh --target raw --use-env
   ./scripts/setup-agent-channel.sh --agent mv-t1-mngr
-  ./scripts/setup-agent-channel.sh --agent mv-t1-mngr --token "$TELEGRAM_BOT_TOKEN"
-  ./scripts/setup-agent-channel.sh --target raw --agent mv-t1-mngr --use-env
 EOF
 }
 

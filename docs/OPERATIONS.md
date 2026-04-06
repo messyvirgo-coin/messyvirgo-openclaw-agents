@@ -1,5 +1,8 @@
 # Operations
 
+This document covers pack operations for OpenClaw installations.
+If you install through `messyvirgo-openclaw-client`, use `docs/CLIENT-INSTALL.md` for the client-specific path.
+
 ## Targets
 
 - `secure`: openclaw-secure (Docker) deployment
@@ -43,17 +46,19 @@ your current shell before running the scripts.
 
 ## Secure workflow
 
-Install the Team 1 bundle:
+Install the core bundle (recommended for new installs):
 
 ```bash
-./scripts/install.sh --target secure --bundle mv-t1
+./scripts/install.sh --target secure --bundle mv-core
 ```
 
-Update the Team 1 bundle:
+Update the core bundle:
 
 ```bash
-./scripts/update.sh --target secure --bundle mv-t1
+./scripts/update.sh --target secure --bundle mv-core
 ```
+
+Legacy Team 1 bundle (`mv-t1-mngr` only): use `--bundle mv-t1` in the same commands instead of `mv-core`.
 
 Install or update everything in the pack:
 
@@ -62,11 +67,13 @@ Install or update everything in the pack:
 ./scripts/update.sh --target secure
 ```
 
-Remove the Team 1 bundle but keep shared pack assets:
+Remove the core bundle but keep shared pack assets:
 
 ```bash
-./scripts/remove.sh --target secure --bundle mv-t1
+./scripts/remove.sh --target secure --bundle mv-core
 ```
+
+Remove the legacy Team 1 bundle the same way with `--bundle mv-t1`.
 
 Remove all pack-managed files but keep stateful workspace files:
 
@@ -80,28 +87,23 @@ Remove pack-managed files and also purge stateful workspace files:
 ./scripts/remove.sh --target secure --purge-state
 ```
 
-Restart secure services after install or update so config/runtime changes are
-picked up:
-
-```bash
-cd ../messyvirgo-openclaw-client
-./openclaw-secure/scripts/down.sh
-./openclaw-secure/scripts/up.sh
-```
+If you manage a secure client deployment, restart it after install or update so config/runtime changes are picked up. See `docs/CLIENT-INSTALL.md`.
 
 ## Raw workflow
 
-Install the Team 1 bundle:
+Install the core bundle:
 
 ```bash
-./scripts/install.sh --target raw --bundle mv-t1
+./scripts/install.sh --target raw --bundle mv-core
 ```
 
-Update the Team 1 bundle:
+Update the core bundle:
 
 ```bash
-./scripts/update.sh --target raw --bundle mv-t1
+./scripts/update.sh --target raw --bundle mv-core
 ```
+
+Legacy Team 1 bundle: use `--bundle mv-t1` in the same commands.
 
 Install or update everything in the pack:
 
@@ -110,10 +112,10 @@ Install or update everything in the pack:
 ./scripts/update.sh --target raw
 ```
 
-Remove the Team 1 bundle:
+Remove the core bundle:
 
 ```bash
-./scripts/remove.sh --target raw --bundle mv-t1
+./scripts/remove.sh --target raw --bundle mv-core
 ```
 
 Remove all pack-managed files:
@@ -132,18 +134,19 @@ Remove all pack-managed files:
 In this pack, older client installs may still have files that are no longer
 shipped. `update.sh` does not automatically delete those stale files.
 
-## Clean roll-out after pack changes
+## Clean Roll-out After Pack Changes
 
-Use this flow when the pack removed agents, removed skills, or stopped shipping
-some workspace files.
+Use this flow when the pack removed agents, removed skills, or stopped shipping some workspace files.
 
 ### Secure
 
 1. Update the bundle:
 
 ```bash
-./scripts/update.sh --target secure --bundle mv-t1
+./scripts/update.sh --target secure --bundle mv-core
 ```
+
+(If you still use the legacy Team 1 bundle, run the same command with `--bundle mv-t1`.)
 
 1. Remove retired agent workspaces:
 
@@ -154,28 +157,25 @@ rm -rf ~/OpenClawWorkspaces/mv-t1-coder \
   ~/OpenClawWorkspaces/mv-t1-funds
 ```
 
-1. Remove stale files from the remaining manager workspace if they still exist:
+1. Remove stale files from remaining agent workspaces if they still exist:
 
 ```bash
-rm -f ~/OpenClawWorkspaces/mv-t1-mngr/TOOLS.md \
+rm -f ~/OpenClawWorkspaces/mv-core-screener/TOOLS.md \
+  ~/OpenClawWorkspaces/mv-t1-mngr/TOOLS.md \
   ~/OpenClawWorkspaces/mv-t1-mngr/MEMORY.md
 ```
 
-1. Restart the secure deployment:
-
-```bash
-cd ../messyvirgo-openclaw-client
-./openclaw-secure/scripts/down.sh
-./openclaw-secure/scripts/up.sh
-```
+1. Restart the secure deployment if you use the client repo. See `docs/CLIENT-INSTALL.md`.
 
 ### Raw
 
 1. Update the bundle:
 
 ```bash
-./scripts/update.sh --target raw --bundle mv-t1
+./scripts/update.sh --target raw --bundle mv-core
 ```
+
+(If you still use the legacy Team 1 bundle, use `--bundle mv-t1`.)
 
 1. Remove retired agent workspaces:
 
@@ -186,10 +186,11 @@ rm -rf ~/OpenClawWorkspaces/mv-t1-coder \
   ~/OpenClawWorkspaces/mv-t1-funds
 ```
 
-1. Remove stale files from the remaining manager workspace if they still exist:
+1. Remove stale files from remaining agent workspaces if they still exist:
 
 ```bash
-rm -f ~/OpenClawWorkspaces/mv-t1-mngr/TOOLS.md \
+rm -f ~/OpenClawWorkspaces/mv-core-screener/TOOLS.md \
+  ~/OpenClawWorkspaces/mv-t1-mngr/TOOLS.md \
   ~/OpenClawWorkspaces/mv-t1-mngr/MEMORY.md
 ```
 
@@ -201,8 +202,8 @@ If you use custom workspace paths, run the same cleanup inside
 If you want to fully reset the surviving agent to the current pack templates:
 
 ```bash
-./scripts/remove.sh --target secure --bundle mv-t1 --purge-state
-./scripts/install.sh --target secure --bundle mv-t1
+./scripts/remove.sh --target secure --bundle mv-core --purge-state
+./scripts/install.sh --target secure --bundle mv-core
 ```
 
 Then remove stale workspaces/files as shown above and restart the secure deployment.
@@ -215,46 +216,6 @@ dashboard Agent settings.
 If an agent has no explicit model configured, it falls back to the runtime
 default model of the target instance.
 
-## Telegram setup via OpenClaw CLI
+## Telegram Setup
 
-Add Telegram and bind it to `mv-t1-mngr`.
-
-**Secure (openclaw-secure):**
-
-```bash
-export TELEGRAM_BOT_TOKEN="your-bot-token"
-../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh channels add --channel telegram --token "$TELEGRAM_BOT_TOKEN"
-../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh agents bind --agent mv-t1-mngr --bind telegram
-```
-
-If CLI access is blocked by local `pairing required`, approve device pairing (secure mode only):
-
-```bash
-../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh devices list
-../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh devices approve <REQUEST_ID>
-```
-
-**Raw (openclaw-raw / native):**
-
-```bash
-export TELEGRAM_BOT_TOKEN="your-bot-token"
-../messyvirgo-openclaw-client/openclaw-raw/scripts/cli.sh channels add --channel telegram --token "$TELEGRAM_BOT_TOKEN"
-../messyvirgo-openclaw-client/openclaw-raw/scripts/cli.sh agents bind --agent mv-t1-mngr --bind telegram
-```
-
-Complete Telegram DM pairing:
-
-```bash
-# send /start or "hi" to your bot in Telegram first
-../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh pairing list --channel telegram
-../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh pairing approve telegram <CODE> --notify
-```
-
-(For raw mode, use `openclaw-raw/scripts/cli.sh` instead of `openclaw-secure/scripts/cli.sh`.)
-
-Verify:
-
-```bash
-../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh agents bindings
-../messyvirgo-openclaw-client/openclaw-secure/scripts/cli.sh agent --agent mv-t1-mngr --message "State your name in one sentence."
-```
+For channel registration, binding, and pairing, follow the client-specific guide if you use `messyvirgo-openclaw-client`, or use your local OpenClaw CLI directly in a plain installation.
