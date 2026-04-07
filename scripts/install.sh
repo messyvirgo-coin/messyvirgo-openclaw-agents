@@ -204,6 +204,11 @@ for agent_id in "${selected_ids[@]}"; do
         ;;
     esac
   done
+
+  avatar_src="$source_dir/avatar.png"
+  if [[ -f "$avatar_src" ]]; then
+    safe_sync_template_file "$avatar_src" "$target_dir/avatar.png" "$SYNC" "$TS"
+  fi
 done
 
 python3 - "$SHARED_MANIFEST_PATH" "$SHARED_DIR" "$SHARED_ENTRY_PATH" "$CONFIG_DIR/mcporter.json" "$SHARED_ENTRY_REL" <<'PY'
@@ -261,6 +266,9 @@ for agent_id in selected_ids:
     soul_json = source_dir / "soul.json"
     if soul_json.exists():
         files.append(soul_json)
+    avatar_png = source_dir / "avatar.png"
+    if avatar_png.is_file():
+        files.append(avatar_png)
     for p in sorted(files):
         workspace_files.append(
             {

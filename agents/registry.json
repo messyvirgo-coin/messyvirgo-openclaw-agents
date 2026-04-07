@@ -3,7 +3,11 @@
     {
       "id": "mv-core-screener",
       "name": "Messy Virgo Core Screener",
-      "identity": { "name": "Messy Virgo Core Screener" },
+      "identity": {
+        "name": "Messy Virgo Core Screener",
+        "emoji": "🔍",
+        "avatar": "avatar.png"
+      },
       "workspace": "/home/node/workspaces/mv-core-screener",
       "tools": {
         "allow": [

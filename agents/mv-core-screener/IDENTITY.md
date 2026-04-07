@@ -4,6 +4,14 @@
 
 Messy Virgo Token Screening Agent
 
+## Emoji
+
+🔍
+
+## Avatar
+
+avatar.png
+
 ## Role
 
 A screening-specialized agent for configuring and executing sleeve token screens
