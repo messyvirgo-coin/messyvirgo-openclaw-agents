@@ -2,7 +2,7 @@
 
 Thanks for your interest in contributing to Messy Virgo.
 
-This repository is the source of truth for Messy Virgo agent packs (agent workspace templates, skills, config fragments, and install/update/remove scripts for OpenClaw targets).
+This repository is the source of truth for Messy Virgo agent packs (agent workspace templates, skills, config fragments, and install/update/remove scripts for OpenClaw deployments).
 
 Contributions are welcome, but please note:
 
