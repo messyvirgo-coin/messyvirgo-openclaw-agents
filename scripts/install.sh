@@ -17,7 +17,7 @@ Installs shared runtime assets and agent workspace templates into the configured
 Set OPENCLAW_CONFIG_DIR / OPENCLAW_WORKSPACES_DIR (optional) to match your deployment; see .env.example.
 
   --sync  Overwrite files that already exist but differ from the pack:
-          - managed mcporter.json (after a timestamped .bak backup)
+          - native `mcp.servers` in generated shared pack config (resolved URLs/headers)
           - agent templates except USER.md, MEMORY.md, IDENTITY.md, HEARTBEAT.md
             (those are always "copy if missing" only, so local state is preserved)
           Without --sync, existing differing files are left unchanged (first-time copy only).
@@ -77,7 +77,6 @@ BUNDLE_ENTRY_PATH="$CONFIG_DIR/$BUNDLE_ENTRY_REL"
 BUNDLE_MANIFEST_PATH="$(bundle_manifest_path_for_config "$CONFIG_DIR" "$BUNDLE_KEY")"
 
 RUNTIME_FRAGMENT_DIR="$ROOT_DIR/runtime/config-fragments"
-RUNTIME_MCPORTER="$ROOT_DIR/runtime/mcporter.json"
 AGENTS_REGISTRY="$ROOT_DIR/agents/registry.json"
 AGENTS_ROOT="$ROOT_DIR/agents"
 BUNDLES_ROOT="$ROOT_DIR/bundles"
@@ -141,43 +140,63 @@ if [[ -d "$SKILLS_SOURCE_DIR" ]]; then
   cp -R "$SKILLS_SOURCE_DIR/." "$SHARED_SKILLS_DIR/" 2>/dev/null || true
 fi
 
-runtime_mcporter="$RUNTIME_MCPORTER"
-if [[ -f "$runtime_mcporter" ]]; then
-  rendered_mcporter="$(mktemp)"
-  python3 - "$runtime_mcporter" "$rendered_mcporter" <<'PY'
+render_shared_pack_config "$RUNTIME_FRAGMENT_DIR" "$SHARED_ENTRY_PATH" "$SHARED_SKILLS_RUNTIME_DIR"
+
+# Native OpenClaw MCP (`mcp.servers`) must use real http(s) URLs after env substitution.
+# A literal "${VAR}" in JSON fails Zod validation (`mcp.servers.*.url` uses z.string().url())
+# and can prevent the gateway from starting. Inject resolved values here.
+python3 - "$SHARED_ENTRY_PATH" <<'PY'
+import json
 import os
-import re
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
-src = Path(sys.argv[1])
-dst = Path(sys.argv[2])
-raw = src.read_text()
+path = Path(sys.argv[1])
+if not path.exists():
+    print(f"ERROR: shared pack config missing: {path}", file=sys.stderr)
+    sys.exit(2)
 
-pattern = re.compile(r"\$\{([A-Z0-9_]+)\}")
-required = sorted(set(pattern.findall(raw)))
-
-missing = [name for name in required if os.environ.get(name, "") == ""]
+url = os.environ.get("MESSY_VIRGO_MCP_URL", "").strip()
+api_key = os.environ.get("MESSY_VIRGO_API_KEY", "").strip()
+missing = []
+if not url:
+    missing.append("MESSY_VIRGO_MCP_URL")
+if not api_key:
+    missing.append("MESSY_VIRGO_API_KEY")
 if missing:
     print(
-        "ERROR: Missing required environment variables for runtime template: "
+        "ERROR: Missing required environment variables for native MCP (mcp.servers): "
         + ", ".join(missing),
         file=sys.stderr,
     )
     sys.exit(2)
 
-rendered = raw
-for name in required:
-    rendered = rendered.replace("${" + name + "}", os.environ[name])
+parsed = urlparse(url)
+if parsed.scheme not in ("http", "https") or not parsed.netloc:
+    print(f"ERROR: MESSY_VIRGO_MCP_URL is not a valid http(s) URL: {url!r}", file=sys.stderr)
+    sys.exit(2)
 
-dst.write_text(rendered)
+# Canonicalize to a slash-terminated endpoint to avoid auth/header loss on redirects
+# (some HTTP clients do not preserve Authorization across 30x follow-ups).
+if not parsed.path:
+    parsed = parsed._replace(path="/")
+elif not parsed.path.endswith("/"):
+    parsed = parsed._replace(path=parsed.path + "/")
+url = parsed.geturl()
+
+cfg = json.loads(path.read_text())
+mcp = cfg.setdefault("mcp", {})
+servers = mcp.setdefault("servers", {})
+servers["messy-virgo-funds"] = {
+    "url": url,
+    "transport": "streamable-http",
+    "headers": {"Authorization": f"Bearer {api_key}"},
+}
+path.write_text(json.dumps(cfg, indent=2) + "\n")
 PY
-  safe_sync_template_file "$rendered_mcporter" "$CONFIG_DIR/mcporter.json" "$SYNC" "$TS"
-  rm -f "$rendered_mcporter"
-  info "Rendered MCP runtime config: $CONFIG_DIR/mcporter.json"
-fi
+info "Wrote native OpenClaw MCP server to $SHARED_ENTRY_PATH (messy-virgo-funds)"
 
-render_shared_pack_config "$RUNTIME_FRAGMENT_DIR" "$SHARED_ENTRY_PATH" "$SHARED_SKILLS_RUNTIME_DIR"
 render_agents_pack_config "$AGENTS_REGISTRY" "$BUNDLE_ENTRY_PATH" "$selected_ids_csv"
 ensure_root_include_hook "$CONFIG_DIR" "$SHARED_ENTRY_REL"
 ensure_root_include_hook "$CONFIG_DIR" "$BUNDLE_ENTRY_REL"
@@ -210,7 +229,7 @@ for agent_id in "${selected_ids[@]}"; do
   fi
 done
 
-python3 - "$SHARED_MANIFEST_PATH" "$SHARED_DIR" "$SHARED_ENTRY_PATH" "$CONFIG_DIR/mcporter.json" "$SHARED_ENTRY_REL" <<'PY'
+python3 - "$SHARED_MANIFEST_PATH" "$SHARED_DIR" "$SHARED_ENTRY_PATH" "$SHARED_ENTRY_REL" <<'PY'
 import json
 import pathlib
 import sys
@@ -218,8 +237,7 @@ import sys
 manifest_path = pathlib.Path(sys.argv[1])
 shared_dir = pathlib.Path(sys.argv[2])
 shared_entry = pathlib.Path(sys.argv[3])
-mcporter_path = pathlib.Path(sys.argv[4])
-shared_rel = sys.argv[5]
+shared_rel = sys.argv[4]
 
 managed_files = []
 for p in sorted(shared_dir.rglob("*")):
@@ -227,8 +245,6 @@ for p in sorted(shared_dir.rglob("*")):
         managed_files.append(str(p))
 if shared_entry.exists():
     managed_files.append(str(shared_entry))
-if mcporter_path.exists():
-    managed_files.append(str(mcporter_path))
 
 manifest = {
     "pack": "messyvirgo-openclaw-agents",

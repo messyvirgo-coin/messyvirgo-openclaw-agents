@@ -7,7 +7,7 @@ It is meant for people who already have an OpenClaw installation and want to add
 It owns:
 
 - shared skills loaded for the whole OpenClaw instance
-- runtime fragments and the `mcporter.json` template
+- runtime fragments and native `mcp.servers` provisioning
 - reusable agent workspace templates and metadata
 - bundle selectors for installing a subset of agents
 - install, update, and remove scripts
@@ -47,7 +47,7 @@ If you use `messyvirgo-openclaw-client`, follow [`docs/CLIENT-INSTALL.md`](./doc
 - `agents/`: source of truth for the agent registry and workspace templates
 - `bundles/`: bundle selectors that choose which agents get installed
 - `skills/`: shared skills loaded instance-wide
-- `runtime/`: runtime fragments and the `mcporter.json` template
+- `runtime/`: runtime fragments merged into generated pack config
 - `docs/OPERATIONS.md`: pack operations, cleanup, and channel setup
 
 ## Notes

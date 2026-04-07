@@ -35,50 +35,8 @@ This skill is context-first. **Sleeve screening context** (`fund_sleeves.meta.sc
 | Inspect current setup | Call `get_sleeve_screening_context(fund_id, sleeve_id)` first. This returns templates, `custom_queries`, `workflow`, and `instructions`. |
 | Inspect template library | Use `mv://screening-templates` or `mv://screening-templates/{template_id}`. Templates are curated and read-only. |
 | Inspect screening catalog | Indicator catalog: **`mv://token-dd/indicator-catalog`**. For screening-filtered KPI/score definitions: **`mv://token-dd/screening/kpis`** and **`mv://token-dd/screening/scores`**. Unfiltered KPI/score lists: **`mv://token-dd/kpis`** and **`mv://token-dd/scores`**. |
-| Test a custom query | Read `mv://token-dd/indicator-catalog`, then call `screen_sleeve_tokens` with flat args: `fund_id`, **`sleeve_id`**, `scope`, optional `snapshot_date`, `filters`, `order_by`, `fields`, and `limit`. Set `limit` to the user-specified top-N or **20** if not specified; **never use more than 20** for a custom query. If using **`mcporter call`** from a shell, use **named** parameters and **single-quoted** JSON for `filters` / `fields` (see `mv-screening-execution` → **mcporter CLI**). |
+| Test a custom query | Read `mv://token-dd/indicator-catalog`, then call `screen_sleeve_tokens` with flat args: `fund_id`, **`sleeve_id`**, `scope`, optional `snapshot_date`, `filters`, `order_by`, `fields`, and `limit`. Set `limit` to the user-specified top-N or **20** if not specified; **never use more than 20** for a custom query. |
 | Save context | Choose a descriptive `query_id` such as `high-momentum-liquid`. In `custom_queries`, use `query_id` as the identifier field, not `id`. For `workflow.steps`, `kind: "query"` steps must reference that same `query_id` in `step.id`. Build the nested `request` payload with `custom_queries`, `workflow`, and `instructions`, then call `replace_sleeve_screening_context`. Keep authored `request.limit` at or below **20**. If the tool returns an error, report it verbatim and fix the payload shape rather than inventing fallback ids or selectors. |
-
-## mcporter Safety
-
-Use this section when invoking `replace_sleeve_screening_context` through `mcporter call` in a shell.
-
-- Prefer a full `--args` JSON payload for this tool. It has a nested `request` object, and flat positional/flag mixes are easy to misparse.
-- The top-level payload must include `fund_id`, `sleeve_id`, and `request`.
-- `request` must include `custom_queries`, `workflow`, and `instructions`.
-- Each saved custom query uses `query_id`, not `id`.
-- Each `workflow.steps` entry for `kind: "query"` must use the corresponding `query_id` in `id`.
-
-```bash
-mcporter call messy-virgo-funds.replace_sleeve_screening_context --args '{
-  "fund_id": "mvf-example",
-  "sleeve_id": "mvs-example-1",
-  "request": {
-    "custom_queries": [
-      {
-        "query_id": "high-momentum-liquid",
-        "name": "High momentum liquid",
-        "description": "Universe screen for strong performance names",
-        "request": {
-          "filters": [
-            {"field": "score_performance_final", "op": "gte", "value": 65}
-          ],
-          "order_by": "-score_performance_final",
-          "fields": ["score_performance_final", "score_social_final"],
-          "limit": 20
-        }
-      }
-    ],
-    "workflow": {
-      "version": 1,
-      "steps": [
-        {"kind": "template", "id": "momentum_combo_v1"},
-        {"kind": "query", "id": "high-momentum-liquid"}
-      ]
-    },
-    "instructions": "Run the template first, then the custom momentum screen."
-  }
-}'
-```
 
 ## Common Mistakes
 
@@ -88,7 +46,6 @@ mcporter call messy-virgo-funds.replace_sleeve_screening_context --args '{
 - Updating `custom_queries` without updating `workflow` references (or vice versa).
 - Using `id` inside `custom_queries` instead of `query_id`.
 - Forgetting that `replace_sleeve_screening_context` expects a nested `request` object.
-- Mixing positionals with `--request` or other flags in `mcporter` and getting misleading validation errors. Prefer one full `--args` payload.
 - Inventing `template:<id>` or `query:<id>` references instead of resolving real ids.
 - Retrying validation failures with made-up selector names or operators.
 

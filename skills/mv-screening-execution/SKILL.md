@@ -40,42 +40,6 @@ Missing inputs, unresolved references, and validation failures must be reported 
    - **Already a fund position:** The API rejects the whole request if any candidate `token_id` is a current fund beta holding. **Do not** respond with an empty shortlist. Remove only the rejected `token_id`(s) from `candidates`, assign contiguous `rank` values from 1, and update `process_narrative` (and `run_catalog` / `execution_trace` when needed) to note which symbols were excluded as existing positions—use symbol, name, or contract address in prose, never internal ids. Call `create_fund_screen_run` again with the corrected payload.
    - **Other failures (transient / 5xx / tool):** Retry the **same** payload once. If it still fails, report the error.
 
-## mcporter Safety
-
-Use this section only when invoking tools through `mcporter call` in a shell. Structured MCP clients are unaffected.
-
-- Prefer named arguments for every tool parameter: `fund_id=...`, `sleeve_id=...`, `scope=...`.
-- Prefer `server.tool` dot notation so the tool target is one token: `messy-virgo-funds.screen_sleeve_tokens`.
-- Avoid positional `fund_id sleeve_id scope` when you also pass flags or JSON. We have seen mcporter over-hydrate positionals and fail with `too many positional arguments`.
-- Single-quote JSON for `filters`, `fields`, `execution_trace`, `run_catalog`, and similar fields.
-- `execution_trace` must be structured JSON, not prose. Put human-readable reasoning in `process_narrative`.
-- Keep `order_by` values that start with `-` as one token: `order_by="-score_performance_final"`.
-
-```bash
-# Good: dot notation + named args + single-quoted JSON
-mcporter call messy-virgo-funds.screen_sleeve_tokens \
-  fund_id=mvf-example \
-  sleeve_id=mvs-example-1 \
-  scope=universe \
-  snapshot_date=2026-04-01 \
-  filters='[{"field":"score_performance_final","op":"gte","value":65}]' \
-  order_by="-score_performance_final" \
-  fields='["score_performance_final","score_social_final"]' \
-  limit=20
-
-# Good: structured JSON persistence payloads
-mcporter call messy-virgo-funds.create_fund_screen_run \
-  fund_id=mvf-example \
-  sleeve_id=mvs-example-1 \
-  snapshot_date=2026-04-01 \
-  process_narrative='Merged two universe runs, skipped one missing input, and ranked ten candidates by DD strength.' \
-  execution_trace='[{"ref":"query:example","scope":"universe","status":"executed"}]' \
-  run_catalog='[{"ref":"query:example","scope":"universe","status":"executed","resolved_request":{}}]' \
-  candidates='[{"token_id":12345,"chain":"base","contract_address":"0x...","rank":1,"candidate_reason":"Strong momentum candidate: relative strength was very high and performance score was solid, so it looks worth deeper diligence as a possible trend-following name."}]'
-```
-
-If your mcporter build does not accept dotted tool names, use two tokens (`messy-virgo-funds` `screen_sleeve_tokens`) but keep named parameters.
-
 ## Shortlist Rules
 
 - A token is eligible for `candidates` only if it appeared in at least one executed `scope: universe` run.
@@ -108,9 +72,7 @@ Good: Strong momentum candidate: Relative Strength is very high (85.78) and Perf
 
 ## Common Mistakes
 
-- Using positional args through `mcporter` plus flags/JSON, which can trigger `too many positional arguments`. Use named args instead.
-- Using double-quoted JSON such as `filters="[{"field":"x"}]"`, which breaks shell parsing. Use single quotes around JSON.
-- Passing plain text like `execution_trace="workflow completed"` and hitting validation because the API expects a dict/list-shaped JSON value.
+- Passing plain text for `execution_trace` and hitting validation because the API expects dict/list-shaped JSON.
 - Writing `candidate_reason` as a score dump or query label instead of an interpreted recommendation in simple language.
 - Guessing `fund_id`, `sleeve_id`, missing conditional inputs, or unresolved `template:<id>` / `query:<id>` refs.
 - Promoting holdings-only tokens into shortlist candidates.

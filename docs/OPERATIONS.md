@@ -39,7 +39,10 @@ Required values:
 - `MESSY_VIRGO_MCP_URL`
 - `MESSY_VIRGO_API_KEY`
 
-These values are rendered into managed `mcporter.json` during install/update.
+These values are required during install/update:
+
+- **Native `mcp.servers`** — written into `packs/messyvirgo-openclaw-agents/generated-shared.json` as **resolved** `https://…` URLs and headers. OpenClaw validates `mcp.servers.*.url` with a real URL schema; placeholder strings like `${MESSY_VIRGO_MCP_URL}` must not appear in that file or the gateway can fail config validation on startup.
+
 Do not rely on dashboard-only edits for these credentials.
 
 If you do not want a repo-local `.env`, you can still export the variables in
