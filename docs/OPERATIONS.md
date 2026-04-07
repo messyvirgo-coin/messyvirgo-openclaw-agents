@@ -1,19 +1,18 @@
 # Operations
 
 This document covers pack operations for OpenClaw installations.
-If you install through `messyvirgo-openclaw-client`, use `docs/CLIENT-INSTALL.md` for the client-specific path.
+If you install through `messyvirgo-openclaw-client`, use `docs/CLIENT-INSTALL.md` for Docker path notes and restarts.
 
-## Targets
+## Paths
 
-- `secure`: openclaw-secure (Docker) deployment
-  - config: `~/.openclaw-secure`
-  - workspaces: `~/OpenClawWorkspaces`
-- `raw`: openclaw-raw (native) deployment
-  - config: `~/.openclaw`
-  - workspaces: `~/OpenClawWorkspaces`
+Install/update/remove use the same layout as `messyvirgo-openclaw-client` / OpenClaw defaults:
 
-If you use custom locations, set `OPENCLAW_CONFIG_DIR` and/or
-`OPENCLAW_WORKSPACES_DIR` before running the scripts.
+- Config/state (host): `OPENCLAW_CONFIG_DIR` or `~/.openclaw`
+- Agent workspace root (host): `OPENCLAW_WORKSPACES_DIR` or `~/OpenClawWorkspaces`
+
+Set those variables before running the scripts, or put them in this repo’s `.env` (loaded automatically).
+
+For a **Docker** gateway, config on the host is mounted at `/home/node/.openclaw` inside the container. Set `OPENCLAW_RUNTIME_CONFIG_DIR=/home/node/.openclaw` so generated pack fragments (for example `skills.load.extraDirs`) use paths the gateway can resolve. Native installs can omit it (it defaults to `OPENCLAW_CONFIG_DIR`).
 
 ### Migration from older plain OpenClaw installs
 
@@ -21,7 +20,11 @@ If pack files were previously written under `~/.openclaw/workspaces`, you can
 preserve that layout by
 setting `OPENCLAW_WORKSPACES_DIR=$HOME/.openclaw/workspaces` before future
 install/update runs. Otherwise, new installs use `~/OpenClawWorkspaces` to
-match the messyvirgo-openclaw-client native defaults.
+match the messyvirgo-openclaw-client defaults.
+
+### Migration from `~/.openclaw-secure`
+
+Older docs used a separate host config directory for Docker. The client now defaults host config to `~/.openclaw`. Either move your tree to `~/.openclaw` or set `OPENCLAW_CONFIG_DIR` to your existing directory before running install/update.
 
 ## Recommended env setup
 
@@ -44,18 +47,18 @@ Do not rely on dashboard-only edits for these credentials.
 If you do not want a repo-local `.env`, you can still export the variables in
 your current shell before running the scripts.
 
-## Secure workflow
+## Install, update, remove
 
 Install the core bundle (recommended for new installs):
 
 ```bash
-./scripts/install.sh --target secure --bundle mv-core
+./scripts/install.sh --bundle mv-core
 ```
 
 Update the core bundle:
 
 ```bash
-./scripts/update.sh --target secure --bundle mv-core
+./scripts/update.sh --bundle mv-core
 ```
 
 Legacy Team 1 bundle (`mv-t1-mngr` only): use `--bundle mv-t1` in the same commands instead of `mv-core`.
@@ -63,14 +66,14 @@ Legacy Team 1 bundle (`mv-t1-mngr` only): use `--bundle mv-t1` in the same comma
 Install or update everything in the pack:
 
 ```bash
-./scripts/install.sh --target secure
-./scripts/update.sh --target secure
+./scripts/install.sh
+./scripts/update.sh
 ```
 
 Remove the core bundle but keep shared pack assets:
 
 ```bash
-./scripts/remove.sh --target secure --bundle mv-core
+./scripts/remove.sh --bundle mv-core
 ```
 
 Remove the legacy Team 1 bundle the same way with `--bundle mv-t1`.
@@ -78,51 +81,16 @@ Remove the legacy Team 1 bundle the same way with `--bundle mv-t1`.
 Remove all pack-managed files but keep stateful workspace files:
 
 ```bash
-./scripts/remove.sh --target secure
+./scripts/remove.sh
 ```
 
 Remove pack-managed files and also purge stateful workspace files:
 
 ```bash
-./scripts/remove.sh --target secure --purge-state
+./scripts/remove.sh --purge-state
 ```
 
-If you manage a secure client deployment, restart it after install or update so config/runtime changes are picked up. See `docs/CLIENT-INSTALL.md`.
-
-## Raw workflow
-
-Install the core bundle:
-
-```bash
-./scripts/install.sh --target raw --bundle mv-core
-```
-
-Update the core bundle:
-
-```bash
-./scripts/update.sh --target raw --bundle mv-core
-```
-
-Legacy Team 1 bundle: use `--bundle mv-t1` in the same commands.
-
-Install or update everything in the pack:
-
-```bash
-./scripts/install.sh --target raw
-./scripts/update.sh --target raw
-```
-
-Remove the core bundle:
-
-```bash
-./scripts/remove.sh --target raw --bundle mv-core
-```
-
-Remove all pack-managed files:
-
-```bash
-./scripts/remove.sh --target raw
-```
+If you use the Messy Virgo client Docker deployment, restart it after install or update so config/runtime changes are picked up. See `docs/CLIENT-INSTALL.md`.
 
 ## What install/update changes
 
@@ -134,16 +102,14 @@ Remove all pack-managed files:
 In this pack, older client installs may still have files that are no longer
 shipped. `update.sh` does not automatically delete those stale files.
 
-## Clean Roll-out After Pack Changes
+## Clean roll-out after pack changes
 
 Use this flow when the pack removed agents, removed skills, or stopped shipping some workspace files.
-
-### Secure
 
 1. Update the bundle:
 
 ```bash
-./scripts/update.sh --target secure --bundle mv-core
+./scripts/update.sh --bundle mv-core
 ```
 
 (If you still use the legacy Team 1 bundle, run the same command with `--bundle mv-t1`.)
@@ -165,34 +131,7 @@ rm -f ~/OpenClawWorkspaces/mv-core-screener/TOOLS.md \
   ~/OpenClawWorkspaces/mv-t1-mngr/MEMORY.md
 ```
 
-1. Restart the secure deployment if you use the client repo. See `docs/CLIENT-INSTALL.md`.
-
-### Raw
-
-1. Update the bundle:
-
-```bash
-./scripts/update.sh --target raw --bundle mv-core
-```
-
-(If you still use the legacy Team 1 bundle, use `--bundle mv-t1`.)
-
-1. Remove retired agent workspaces:
-
-```bash
-rm -rf ~/OpenClawWorkspaces/mv-t1-coder \
-  ~/OpenClawWorkspaces/mv-t1-planner \
-  ~/OpenClawWorkspaces/mv-t1-researcher \
-  ~/OpenClawWorkspaces/mv-t1-funds
-```
-
-1. Remove stale files from remaining agent workspaces if they still exist:
-
-```bash
-rm -f ~/OpenClawWorkspaces/mv-core-screener/TOOLS.md \
-  ~/OpenClawWorkspaces/mv-t1-mngr/TOOLS.md \
-  ~/OpenClawWorkspaces/mv-t1-mngr/MEMORY.md
-```
+1. If you use the client repo Docker deployment, restart it. See `docs/CLIENT-INSTALL.md`.
 
 If you use custom workspace paths, run the same cleanup inside
 `$OPENCLAW_WORKSPACES_DIR`.
@@ -202,11 +141,11 @@ If you use custom workspace paths, run the same cleanup inside
 If you want to fully reset the surviving agent to the current pack templates:
 
 ```bash
-./scripts/remove.sh --target secure --bundle mv-core --purge-state
-./scripts/install.sh --target secure --bundle mv-core
+./scripts/remove.sh --bundle mv-core --purge-state
+./scripts/install.sh --bundle mv-core
 ```
 
-Then remove stale workspaces/files as shown above and restart the secure deployment.
+Then remove stale workspaces/files as shown above and restart the Docker deployment if applicable.
 
 ## Post-install model assignment
 

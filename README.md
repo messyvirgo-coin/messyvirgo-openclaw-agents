@@ -10,13 +10,13 @@ It owns:
 - runtime fragments and the `mcporter.json` template
 - reusable agent workspace templates and metadata
 - bundle selectors for installing a subset of agents
-- install, update, and remove scripts for `raw` and `secure` targets
+- install, update, and remove scripts
 
 It does not own:
 
 - the upstream OpenClaw source fork
 - the Messy Virgo client repo
-- Docker hardening or other secure deployment wrapper concerns
+- Docker or deployment wrapper concerns beyond documented path conventions
 - the legacy `messyvirgo-skills` repo
 
 ## Quick Start
@@ -26,10 +26,10 @@ For a plain OpenClaw installation, export the MCP variables and install the core
 ```bash
 export MESSY_VIRGO_MCP_URL="https://api.messyvirgo.com/mcp"
 export MESSY_VIRGO_API_KEY="your-api-key"
-./scripts/install.sh --target raw --bundle mv-core
+./scripts/install.sh --bundle mv-core
 ```
 
-Use `--target secure` if you are installing into a secure Docker-based OpenClaw deployment instead of a plain native one.
+Paths default to `~/.openclaw` (config/state) and `~/OpenClawWorkspaces` (agent workspaces), overridable with `OPENCLAW_CONFIG_DIR` and `OPENCLAW_WORKSPACES_DIR`. If you use the Messy Virgo Docker client, set `OPENCLAW_RUNTIME_CONFIG_DIR=/home/node/.openclaw` so generated skill paths match the container — see [`.env.example`](./.env.example) and [`docs/CLIENT-INSTALL.md`](./docs/CLIENT-INSTALL.md).
 
 If you want every managed agent in the pack, omit `--bundle`.
 

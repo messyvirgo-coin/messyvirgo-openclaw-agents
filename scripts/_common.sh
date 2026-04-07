@@ -27,37 +27,18 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "Missing dependency: $1"
 }
 
-resolve_target_paths() {
-  local target="$1"
-  case "$target" in
-    secure)
-      CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-$HOME/.openclaw-secure}"
-      WORKSPACES_DIR="${OPENCLAW_WORKSPACES_DIR:-$HOME/OpenClawWorkspaces}"
-      ;;
-    raw)
-      CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-$HOME/.openclaw}"
-      WORKSPACES_DIR="${OPENCLAW_WORKSPACES_DIR:-$HOME/OpenClawWorkspaces}"
-      ;;
-    *)
-      die "Unknown target '$target' (expected secure|raw)"
-      ;;
-  esac
+# Host paths for install/update/remove. Matches messyvirgo-openclaw-client / OpenClaw defaults:
+# OPENCLAW_CONFIG_DIR defaults to ~/.openclaw; OPENCLAW_WORKSPACES_DIR defaults to ~/OpenClawWorkspaces.
+resolve_openclaw_paths() {
+  CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-$HOME/.openclaw}"
+  WORKSPACES_DIR="${OPENCLAW_WORKSPACES_DIR:-$HOME/OpenClawWorkspaces}"
 }
 
-runtime_config_dir_for_target() {
-  local target="$1"
-  local host_config_dir="$2"
-  case "$target" in
-    secure)
-      echo "/home/node/.openclaw"
-      ;;
-    raw)
-      echo "$host_config_dir"
-      ;;
-    *)
-      die "Unknown target '$target' (expected secure|raw)"
-      ;;
-  esac
+# Config directory path as seen by the running OpenClaw gateway when resolving pack fragments (e.g. skills
+# extraDirs). Native install: same as CONFIG_DIR. Docker gateway: host config is mounted at /home/node/.openclaw
+# — set OPENCLAW_RUNTIME_CONFIG_DIR=/home/node/.openclaw in .env when using messyvirgo-openclaw-client.
+runtime_config_dir_for_fragments() {
+  echo "${OPENCLAW_RUNTIME_CONFIG_DIR:-$CONFIG_DIR}"
 }
 
 managed_root_for_config() {

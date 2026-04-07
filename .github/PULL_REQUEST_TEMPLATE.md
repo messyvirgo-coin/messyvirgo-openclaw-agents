@@ -13,13 +13,13 @@
 ## How to test
 
 - Provide exact commands you ran.
-- Include relevant environment details when needed (OS, OpenClaw target type, secure/raw mode).
+- Include relevant environment details when needed (OS, Docker vs native OpenClaw, relevant `OPENCLAW_*` path overrides).
 
 Example:
 
 ```bash
-./scripts/install.sh --target secure
-./scripts/update.sh --target secure
+./scripts/install.sh --bundle mv-core
+./scripts/update.sh --bundle mv-core
 ```
 
 ## Checklist

@@ -5,13 +5,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/_common.sh"
 
-TARGET="secure"
 BUNDLE=""
 PROFILE=""
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/update.sh [--target secure|raw] [--bundle <name>]
+Usage: ./scripts/update.sh [--bundle <name>]
 
 Updates managed pack files while preserving stateful workspace files.
 Defaults to all agents when --bundle is not provided.
@@ -20,10 +19,6 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --target)
-      TARGET="${2:-}"
-      shift 2
-      ;;
     --bundle)
       BUNDLE="${2:-}"
       shift 2
@@ -49,9 +44,8 @@ if [[ -n "$PROFILE" ]]; then
   BUNDLE="$PROFILE"
 fi
 
-resolve_target_paths "$TARGET"
 if [[ -n "$BUNDLE" ]]; then
-  "$SCRIPT_DIR/install.sh" --target "$TARGET" --bundle "$BUNDLE" --sync
+  "$SCRIPT_DIR/install.sh" --bundle "$BUNDLE" --sync
 else
-  "$SCRIPT_DIR/install.sh" --target "$TARGET" --sync
+  "$SCRIPT_DIR/install.sh" --sync
 fi

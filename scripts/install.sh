@@ -5,26 +5,29 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/_common.sh"
 
-TARGET="secure"
 BUNDLE=""
 PROFILE=""
 SYNC=0
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/install.sh [--target secure|raw] [--bundle <name>] [--sync]
+Usage: ./scripts/install.sh [--bundle <name>] [--sync]
 
-Installs shared runtime assets and agent workspace templates into a target OpenClaw instance.
+Installs shared runtime assets and agent workspace templates into the configured OpenClaw instance.
+Set OPENCLAW_CONFIG_DIR / OPENCLAW_WORKSPACES_DIR (optional) to match your deployment; see .env.example.
+
+  --sync  Overwrite files that already exist but differ from the pack:
+          - managed mcporter.json (after a timestamped .bak backup)
+          - agent templates except USER.md, MEMORY.md, IDENTITY.md, HEARTBEAT.md
+            (those are always "copy if missing" only, so local state is preserved)
+          Without --sync, existing differing files are left unchanged (first-time copy only).
+
 Defaults to all agents when --bundle is not provided.
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --target)
-      TARGET="${2:-}"
-      shift 2
-      ;;
     --bundle)
       BUNDLE="${2:-}"
       shift 2
@@ -54,14 +57,14 @@ if [[ -n "$PROFILE" ]]; then
   BUNDLE="$PROFILE"
 fi
 
-resolve_target_paths "$TARGET"
+resolve_openclaw_paths
 ensure_dirs
 TS="$(date +%Y%m%d-%H%M%S)"
 
 MANAGED_ROOT="$(managed_root_for_config "$CONFIG_DIR")"
 SHARED_DIR="$MANAGED_ROOT/shared"
 SHARED_SKILLS_DIR="$SHARED_DIR/skills"
-RUNTIME_CONFIG_DIR="$(runtime_config_dir_for_target "$TARGET" "$CONFIG_DIR")"
+RUNTIME_CONFIG_DIR="$(runtime_config_dir_for_fragments)"
 RUNTIME_MANAGED_ROOT="$(managed_root_for_config "$RUNTIME_CONFIG_DIR")"
 SHARED_SKILLS_RUNTIME_DIR="$RUNTIME_MANAGED_ROOT/shared/skills"
 SHARED_ENTRY_REL="$(shared_entry_rel_for_pack)"
@@ -90,10 +93,10 @@ mkdir -p "$SHARED_DIR" "$(dirname "$BUNDLE_MANIFEST_PATH")" "$(dirname "$SHARED_
 if [[ -n "$BUNDLE" ]]; then
   bundle_path="$BUNDLES_ROOT/$BUNDLE.json"
   [[ -f "$bundle_path" ]] || die "Bundle not found: $BUNDLE"
-  info "Installing bundle '$BUNDLE' into target '$TARGET'"
+  info "Installing bundle '$BUNDLE'"
 else
   bundle_path=""
-  info "Installing all agents into target '$TARGET'"
+  info "Installing all agents"
 fi
 
 selected_ids_csv="$(python3 - "$AGENTS_REGISTRY" "$bundle_path" <<'PY'

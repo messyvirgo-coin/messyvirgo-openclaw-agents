@@ -5,14 +5,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/_common.sh"
 
-TARGET="secure"
 PURGE_STATE=0
 BUNDLE=""
 PROFILE=""
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/remove.sh [--target secure|raw] [--bundle <name>] [--purge-state]
+Usage: ./scripts/remove.sh [--bundle <name>] [--purge-state]
 
 Removes files managed by this pack. Stateful workspace files are preserved unless
 --purge-state is explicitly set.
@@ -21,10 +20,6 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --target)
-      TARGET="${2:-}"
-      shift 2
-      ;;
     --bundle)
       BUNDLE="${2:-}"
       shift 2
@@ -54,7 +49,7 @@ if [[ -n "$PROFILE" ]]; then
   BUNDLE="$PROFILE"
 fi
 
-resolve_target_paths "$TARGET"
+resolve_openclaw_paths
 
 SHARED_MANIFEST_PATH="$(shared_manifest_path_for_config "$CONFIG_DIR")"
 BUNDLES_MANIFEST_DIR="$CONFIG_DIR/$PACK_MANAGED_ROOT/manifests"
@@ -114,7 +109,7 @@ if [[ -n "$BUNDLE" ]]; then
   bundle_manifest_path="$(bundle_manifest_path_for_config "$CONFIG_DIR" "$bundle_key")"
   [[ -f "$bundle_manifest_path" ]] || die "Bundle manifest not found: $bundle_manifest_path"
   remove_manifest "$bundle_manifest_path"
-  info "Bundle '$BUNDLE' removed from target '$TARGET'. Shared assets were left intact."
+  info "Bundle '$BUNDLE' removed. Shared assets were left intact."
 else
   if [[ -d "$BUNDLES_MANIFEST_DIR" ]]; then
     for manifest in "$BUNDLES_MANIFEST_DIR"/*.json; do
@@ -123,7 +118,7 @@ else
     done
   fi
   remove_manifest "$SHARED_MANIFEST_PATH"
-  info "All pack-managed files removed from target '$TARGET'."
+  info "All pack-managed files removed."
 fi
 
 python3 - "$CONFIG_DIR/$PACK_MANAGED_ROOT" <<'PY'
