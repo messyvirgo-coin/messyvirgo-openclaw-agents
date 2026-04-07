@@ -27,18 +27,10 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "Missing dependency: $1"
 }
 
-# Host paths for install/update/remove. Matches messyvirgo-openclaw-client / OpenClaw defaults:
-# OPENCLAW_CONFIG_DIR defaults to ~/.openclaw; OPENCLAW_WORKSPACES_DIR defaults to ~/OpenClawWorkspaces.
+# Host paths for install/update/remove.
 resolve_openclaw_paths() {
   CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-$HOME/.openclaw}"
-  WORKSPACES_DIR="${OPENCLAW_WORKSPACES_DIR:-$HOME/OpenClawWorkspaces}"
-}
-
-# Config directory path as seen by the running OpenClaw gateway when resolving pack fragments (e.g. skills
-# extraDirs). Native install: same as CONFIG_DIR. Docker gateway: host config is mounted at /home/node/.openclaw
-# — set OPENCLAW_RUNTIME_CONFIG_DIR=/home/node/.openclaw in .env when using messyvirgo-openclaw-client.
-runtime_config_dir_for_fragments() {
-  echo "${OPENCLAW_RUNTIME_CONFIG_DIR:-$CONFIG_DIR}"
+  WORKSPACES_DIR="${OPENCLAW_WORKSPACES_DIR:-$HOME/.openclaw/workspaces}"
 }
 
 managed_root_for_config() {
@@ -158,6 +150,7 @@ load = skills.setdefault("load", {})
 extra_dirs = load.setdefault("extraDirs", [])
 if managed_skills_dir not in extra_dirs:
     extra_dirs.append(managed_skills_dir)
+load["extraDirs"] = list(dict.fromkeys(extra_dirs))
 
 out_path.parent.mkdir(parents=True, exist_ok=True)
 with out_path.open("w") as f:

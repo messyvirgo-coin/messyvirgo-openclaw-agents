@@ -29,7 +29,7 @@ export MESSY_VIRGO_API_KEY="your-api-key"
 ./scripts/install.sh --bundle mv-core
 ```
 
-Paths default to `~/.openclaw` (config/state) and `~/OpenClawWorkspaces` (agent workspaces), overridable with `OPENCLAW_CONFIG_DIR` and `OPENCLAW_WORKSPACES_DIR`. If you use the Messy Virgo Docker client, set `OPENCLAW_RUNTIME_CONFIG_DIR=/home/node/.openclaw` so generated skill paths match the container — see [`.env.example`](./.env.example) and [`docs/CLIENT-INSTALL.md`](./docs/CLIENT-INSTALL.md).
+Paths default to `~/.openclaw` (config/state) and `~/.openclaw/workspaces` (agent workspaces), overridable with `OPENCLAW_CONFIG_DIR` and `OPENCLAW_WORKSPACES_DIR`. Generated `skills.load.extraDirs` is rendered as `~/.openclaw/packs/messyvirgo-openclaw-agents/shared/skills` so the running gateway resolves it correctly in both native and Docker-backed installs under the same home-relative contract.
 
 If you want every managed agent in the pack, omit `--bundle`.
 

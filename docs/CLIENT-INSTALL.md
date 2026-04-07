@@ -10,19 +10,13 @@ The client repo handles the OpenClaw deployment itself. This pack only supplies 
 - `MESSY_VIRGO_MCP_URL`
 - `MESSY_VIRGO_API_KEY`
 
-Client `openclaw-secure/scripts/setup.sh` defaults `OPENCLAW_CONFIG_DIR` to `~/.openclaw` (override in the client repo `.env`). Host agent workspaces stay under `~/OpenClawWorkspaces` by default. The gateway container sees config at `/home/node/.openclaw`, so this pack’s `.env` should include:
-
-```bash
-OPENCLAW_RUNTIME_CONFIG_DIR=/home/node/.openclaw
-```
-
-(or export it before running the scripts). Files are still written on the host under `OPENCLAW_CONFIG_DIR`; that variable only affects paths embedded in generated pack fragments (for example shared skills).
+Client `openclaw-secure/scripts/setup.sh` defaults `OPENCLAW_CONFIG_DIR` to `~/.openclaw` (override in the client repo `.env`). Host agent workspaces default to `~/.openclaw/workspaces`. Pack-generated fragments use the same home-relative contract, so no Docker/native target switch is required for pack install/update.
 
 ## Install
 
 ```bash
 cp .env.example .env
-# edit .env: MCP keys, OPENCLAW_RUNTIME_CONFIG_DIR for Docker as above
+# edit .env: MCP keys
 ./scripts/install.sh --bundle mv-core
 ```
 

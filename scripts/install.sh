@@ -59,14 +59,13 @@ fi
 
 resolve_openclaw_paths
 ensure_dirs
+
 TS="$(date +%Y%m%d-%H%M%S)"
 
 MANAGED_ROOT="$(managed_root_for_config "$CONFIG_DIR")"
 SHARED_DIR="$MANAGED_ROOT/shared"
 SHARED_SKILLS_DIR="$SHARED_DIR/skills"
-RUNTIME_CONFIG_DIR="$(runtime_config_dir_for_fragments)"
-RUNTIME_MANAGED_ROOT="$(managed_root_for_config "$RUNTIME_CONFIG_DIR")"
-SHARED_SKILLS_RUNTIME_DIR="$RUNTIME_MANAGED_ROOT/shared/skills"
+SHARED_SKILLS_RUNTIME_DIR="~/.openclaw/$PACK_MANAGED_ROOT/shared/skills"
 SHARED_ENTRY_REL="$(shared_entry_rel_for_pack)"
 SHARED_ENTRY_PATH="$CONFIG_DIR/$SHARED_ENTRY_REL"
 SHARED_MANIFEST_PATH="$(shared_manifest_path_for_config "$CONFIG_DIR")"

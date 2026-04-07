@@ -8,19 +8,17 @@ If you install through `messyvirgo-openclaw-client`, use `docs/CLIENT-INSTALL.md
 Install/update/remove use the same layout as `messyvirgo-openclaw-client` / OpenClaw defaults:
 
 - Config/state (host): `OPENCLAW_CONFIG_DIR` or `~/.openclaw`
-- Agent workspace root (host): `OPENCLAW_WORKSPACES_DIR` or `~/OpenClawWorkspaces`
+- Agent workspace root (host): `OPENCLAW_WORKSPACES_DIR` or `~/.openclaw/workspaces`
 
 Set those variables before running the scripts, or put them in this repo’s `.env` (loaded automatically).
 
-For a **Docker** gateway, config on the host is mounted at `/home/node/.openclaw` inside the container. Set `OPENCLAW_RUNTIME_CONFIG_DIR=/home/node/.openclaw` so generated pack fragments (for example `skills.load.extraDirs`) use paths the gateway can resolve. Native installs can omit it (it defaults to `OPENCLAW_CONFIG_DIR`).
+Generated pack fragments use the same home-relative contract as OpenClaw config (`~/.openclaw/...`). In particular, shared skills are rendered to `~/.openclaw/packs/messyvirgo-openclaw-agents/shared/skills` in `skills.load.extraDirs`, so native and Docker-backed gateways resolve the same path shape without per-target script flags.
 
 ### Migration from older plain OpenClaw installs
 
-If pack files were previously written under `~/.openclaw/workspaces`, you can
-preserve that layout by
-setting `OPENCLAW_WORKSPACES_DIR=$HOME/.openclaw/workspaces` before future
-install/update runs. Otherwise, new installs use `~/OpenClawWorkspaces` to
-match the messyvirgo-openclaw-client defaults.
+Current defaults already use `~/.openclaw/workspaces`. If you previously used
+`~/OpenClawWorkspaces`, set `OPENCLAW_WORKSPACES_DIR` explicitly while migrating
+or move those directories into `~/.openclaw/workspaces`.
 
 ### Migration from `~/.openclaw-secure`
 
@@ -117,18 +115,18 @@ Use this flow when the pack removed agents, removed skills, or stopped shipping 
 1. Remove retired agent workspaces:
 
 ```bash
-rm -rf ~/OpenClawWorkspaces/mv-t1-coder \
-  ~/OpenClawWorkspaces/mv-t1-planner \
-  ~/OpenClawWorkspaces/mv-t1-researcher \
-  ~/OpenClawWorkspaces/mv-t1-funds
+rm -rf ~/.openclaw/workspaces/mv-t1-coder \
+  ~/.openclaw/workspaces/mv-t1-planner \
+  ~/.openclaw/workspaces/mv-t1-researcher \
+  ~/.openclaw/workspaces/mv-t1-funds
 ```
 
 1. Remove stale files from remaining agent workspaces if they still exist:
 
 ```bash
-rm -f ~/OpenClawWorkspaces/mv-core-screener/TOOLS.md \
-  ~/OpenClawWorkspaces/mv-t1-mngr/TOOLS.md \
-  ~/OpenClawWorkspaces/mv-t1-mngr/MEMORY.md
+rm -f ~/.openclaw/workspaces/mv-core-screener/TOOLS.md \
+  ~/.openclaw/workspaces/mv-t1-mngr/TOOLS.md \
+  ~/.openclaw/workspaces/mv-t1-mngr/MEMORY.md
 ```
 
 1. If you use the client repo Docker deployment, restart it. See `docs/CLIENT-INSTALL.md`.

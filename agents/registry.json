@@ -8,7 +8,7 @@
         "emoji": "🔍",
         "avatar": "avatar.png"
       },
-      "workspace": "/home/node/workspaces/mv-core-screener",
+      "workspace": "~/.openclaw/workspaces/mv-core-screener",
       "tools": {
         "allow": [
           "exec",
@@ -49,7 +49,7 @@
       "id": "mv-t1-mngr",
       "name": "Messy Virgo T1 Manager",
       "identity": { "name": "Messy Virgo T1 Manager" },
-      "workspace": "/home/node/workspaces/mv-t1-mngr",
+      "workspace": "~/.openclaw/workspaces/mv-t1-mngr",
       "tools": {
         "allow": [
           "exec",
