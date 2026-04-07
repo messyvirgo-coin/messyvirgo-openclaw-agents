@@ -34,10 +34,12 @@
           "agents_list",
           "image",
           "tavily_search",
-          "tavily_extract"
+          "tavily_extract",
+          "messy-virgo-funds__*"
         ]
       },
       "skills": [
+        "mcporter",
         "mv-screening-configuration",
         "mv-screening-execution"
       ],
@@ -75,10 +77,12 @@
           "agents_list",
           "image",
           "tavily_search",
-          "tavily_extract"
+          "tavily_extract",
+          "messy-virgo-funds__*"
         ]
       },
       "skills": [
+        "mcporter",
         "mv-screening-configuration",
         "mv-screening-execution"
       ],
