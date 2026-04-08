@@ -7,7 +7,7 @@
 
 ## What changed
 
-- Summarize the key changes (agents, bundles, runtime, skills, scripts, docs, config fragments, etc.).
+- Summarize the key changes (agents, bundles, skills, scripts, docs, etc.).
 - Note any behavior changes for operators/users.
 
 ## How to test

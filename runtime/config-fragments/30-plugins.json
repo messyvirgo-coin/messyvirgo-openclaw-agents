@@ -1,9 +1,0 @@
-{
-  "plugins": {
-    "entries": {
-      "telegram": {
-        "enabled": true
-      }
-    }
-  }
-}

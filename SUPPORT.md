@@ -6,7 +6,7 @@ This repository contains Messy Virgo OpenClaw agent pack assets and pack-managem
 
 - The code here is provided as-is, with best-effort maintenance.
 - You are welcome to open issues and pull requests.
-  - However, this repo is not a support channel or helpdesk, and maintainers may not respond quickly (or at all).
+  - However, this repo is not a support channel or helpdesk, and maintainers may not respond quickly.
 - Maintainers retain editorial control over what gets merged.
 
 ## Where to report bugs

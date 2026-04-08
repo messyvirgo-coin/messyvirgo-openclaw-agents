@@ -1,42 +1,28 @@
 # Contributing to messyvirgo-openclaw-agents
 
-Thanks for your interest in contributing to Messy Virgo.
-
-This repository is the source of truth for Messy Virgo agent packs (agent workspace templates, skills, config fragments, and install/update/remove scripts for OpenClaw deployments).
-
-Contributions are welcome, but please note:
-
-- This repo is public and open to PRs, but not every PR will be merged.
-- Maintainers keep final say on scope, design, and what gets shipped.
-- Support is best-effort only (see [SUPPORT.md](./SUPPORT.md)).
+Thanks for contributing. This repository is Messy Virgo’s **OpenClaw agent pack**: workspace templates, shared skills, bundle definitions, and install/update/remove scripts. PRs are welcome; merges and scope are maintainer decisions. Support is best-effort—see [SUPPORT.md](./SUPPORT.md).
 
 ## Ground rules
 
-- Be respectful: follow the [Code of Conduct](./CODE_OF_CONDUCT.md).
-- Keep it public-safe: do not include secrets, tokens, personal data, private links, or confidential information.
-- Keep PRs focused: one change-set per PR when possible.
-- Keep changes auditable: explain what changed, why, and how you verified it.
+- Follow the [Code of Conduct](./CODE_OF_CONDUCT.md).
+- Do not post secrets, tokens, personal data, private links, or confidential content in issues or PRs.
+- Keep PRs focused (one change-set when possible) and explain what changed, why, and how you verified it.
 
-## What kinds of contributions we welcome
+## What we welcome
 
-- Bug fixes and improvements in `scripts/`
-- Documentation improvements in `README.md` and `docs/`
-- Agent/runtime quality improvements under `agents/`, `runtime/`, `skills/`, and `bundles/`
-- Safer defaults and better operator ergonomics that do not break existing flows
+- Fixes and improvements in `scripts/`
+- Documentation updates in `README.md` and `docs/`
+- Improvements to `agents/`, `skills/`, and `bundles/` that preserve existing install and operator flows
 
-## Contribution boundaries (important)
+## Scope
 
-- This repo owns Messy Virgo pack assets and pack-management logic.
-- It is not the upstream OpenClaw project.
-  - Upstream OpenClaw issues/feature requests should generally go to OpenClaw.
-- Maintainers may decline changes that increase maintenance burden, reduce safety, or expand scope without clear value.
+Pack assets and pack-management logic for Messy Virgo only. Bugs and features in **OpenClaw itself** should go to the OpenClaw project. We may decline changes that add maintenance cost or scope without clear benefit.
 
 ## Pull request checklist
 
-- Explain intent: what problem does this solve?
-- Add or update docs if user workflow changes.
-- Include reproducible verification steps (commands and expected outcomes).
-- Double-check that you did not commit `.env`, tokens, credentials, or private paths.
+- Add or update docs when user or operator workflow changes.
+- Include verification steps (commands run and what you observed).
+- Confirm you did not commit `.env`, tokens, credentials, or private paths.
 
 ## Maintainers
 

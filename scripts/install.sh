@@ -17,7 +17,7 @@ Installs shared runtime assets and agent workspace templates into the configured
 Set OPENCLAW_CONFIG_DIR / OPENCLAW_WORKSPACES_DIR (optional) to match your deployment; see .env.example.
 
   --sync  Overwrite files that already exist but differ from the pack:
-          - native `mcp.servers` in generated shared pack config (resolved URLs/headers)
+          - generated shared pack config (shared skills path)
           - agent templates except USER.md, MEMORY.md, IDENTITY.md, HEARTBEAT.md
             (those are always "copy if missing" only, so local state is preserved)
           Without --sync, existing differing files are left unchanged (first-time copy only).
@@ -76,13 +76,11 @@ BUNDLE_ENTRY_REL="$(bundle_entry_rel_for_pack "$BUNDLE_KEY")"
 BUNDLE_ENTRY_PATH="$CONFIG_DIR/$BUNDLE_ENTRY_REL"
 BUNDLE_MANIFEST_PATH="$(bundle_manifest_path_for_config "$CONFIG_DIR" "$BUNDLE_KEY")"
 
-RUNTIME_FRAGMENT_DIR="$ROOT_DIR/runtime/config-fragments"
 AGENTS_REGISTRY="$ROOT_DIR/agents/registry.json"
 AGENTS_ROOT="$ROOT_DIR/agents"
 BUNDLES_ROOT="$ROOT_DIR/bundles"
 SKILLS_SOURCE_DIR="$ROOT_DIR/skills"
 
-[[ -d "$RUNTIME_FRAGMENT_DIR" ]] || die "Missing runtime fragments directory: $RUNTIME_FRAGMENT_DIR"
 [[ -f "$AGENTS_REGISTRY" ]] || die "Missing agents registry: $AGENTS_REGISTRY"
 
 mkdir -p "$MANAGED_ROOT"
@@ -140,62 +138,8 @@ if [[ -d "$SKILLS_SOURCE_DIR" ]]; then
   cp -R "$SKILLS_SOURCE_DIR/." "$SHARED_SKILLS_DIR/" 2>/dev/null || true
 fi
 
-render_shared_pack_config "$RUNTIME_FRAGMENT_DIR" "$SHARED_ENTRY_PATH" "$SHARED_SKILLS_RUNTIME_DIR"
-
-# Native OpenClaw MCP (`mcp.servers`) must use real http(s) URLs after env substitution.
-# A literal "${VAR}" in JSON fails Zod validation (`mcp.servers.*.url` uses z.string().url())
-# and can prevent the gateway from starting. Inject resolved values here.
-python3 - "$SHARED_ENTRY_PATH" <<'PY'
-import json
-import os
-import sys
-from pathlib import Path
-from urllib.parse import urlparse
-
-path = Path(sys.argv[1])
-if not path.exists():
-    print(f"ERROR: shared pack config missing: {path}", file=sys.stderr)
-    sys.exit(2)
-
-url = os.environ.get("MESSY_VIRGO_MCP_URL", "").strip()
-api_key = os.environ.get("MESSY_VIRGO_API_KEY", "").strip()
-missing = []
-if not url:
-    missing.append("MESSY_VIRGO_MCP_URL")
-if not api_key:
-    missing.append("MESSY_VIRGO_API_KEY")
-if missing:
-    print(
-        "ERROR: Missing required environment variables for native MCP (mcp.servers): "
-        + ", ".join(missing),
-        file=sys.stderr,
-    )
-    sys.exit(2)
-
-parsed = urlparse(url)
-if parsed.scheme not in ("http", "https") or not parsed.netloc:
-    print(f"ERROR: MESSY_VIRGO_MCP_URL is not a valid http(s) URL: {url!r}", file=sys.stderr)
-    sys.exit(2)
-
-# Canonicalize to a slash-terminated endpoint to avoid auth/header loss on redirects
-# (some HTTP clients do not preserve Authorization across 30x follow-ups).
-if not parsed.path:
-    parsed = parsed._replace(path="/")
-elif not parsed.path.endswith("/"):
-    parsed = parsed._replace(path=parsed.path + "/")
-url = parsed.geturl()
-
-cfg = json.loads(path.read_text())
-mcp = cfg.setdefault("mcp", {})
-servers = mcp.setdefault("servers", {})
-servers["messy-virgo-funds"] = {
-    "url": url,
-    "transport": "streamable-http",
-    "headers": {"Authorization": f"Bearer {api_key}"},
-}
-path.write_text(json.dumps(cfg, indent=2) + "\n")
-PY
-info "Wrote native OpenClaw MCP server to $SHARED_ENTRY_PATH (messy-virgo-funds)"
+render_shared_pack_config "$SHARED_ENTRY_PATH" "$SHARED_SKILLS_RUNTIME_DIR"
+info "Wrote shared pack config to $SHARED_ENTRY_PATH"
 
 render_agents_pack_config "$AGENTS_REGISTRY" "$BUNDLE_ENTRY_PATH" "$selected_ids_csv"
 ensure_root_include_hook "$CONFIG_DIR" "$SHARED_ENTRY_REL"

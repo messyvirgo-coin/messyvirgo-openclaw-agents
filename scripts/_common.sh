@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# Load repo .env if present (for install/update; MCP URL and API key)
+# Load repo .env if present (for install/update; optional paths and CLI auth if you use one)
 if [[ -f "$ROOT_DIR/.env" ]]; then
   set -a
   # shellcheck source=/dev/null
@@ -109,52 +109,28 @@ safe_sync_template_file() {
 }
 
 render_shared_pack_config() {
-  local fragment_dir="$1"
-  local out_path="$2"
-  local managed_skills_dir="$3"
+  local out_path="$1"
+  local managed_skills_dir="$2"
 
-  python3 - "$fragment_dir" "$out_path" "$managed_skills_dir" <<'PY'
+  python3 - "$out_path" "$managed_skills_dir" <<'PY'
 import json
 import pathlib
 import sys
 
-fragment_dir = pathlib.Path(sys.argv[1])
-out_path = pathlib.Path(sys.argv[2])
-managed_skills_dir = sys.argv[3]
+out_path = pathlib.Path(sys.argv[1])
+managed_skills_dir = sys.argv[2]
 
-cfg = {"$include": []}
-parts = []
-for p in sorted(fragment_dir.glob("*.json")):
-    with p.open() as f:
-        parts.append(json.load(f))
-
-def deep_merge(left, right):
-    if isinstance(left, dict) and isinstance(right, dict):
-        out = dict(left)
-        for k, v in right.items():
-            if k in out:
-                out[k] = deep_merge(out[k], v)
-            else:
-                out[k] = v
-        return out
-    if isinstance(left, list) and isinstance(right, list):
-        return left + right
-    return right
-
-merged = {}
-for part in parts:
-    merged = deep_merge(merged, part)
-
-skills = merged.setdefault("skills", {})
-load = skills.setdefault("load", {})
-extra_dirs = load.setdefault("extraDirs", [])
-if managed_skills_dir not in extra_dirs:
-    extra_dirs.append(managed_skills_dir)
-load["extraDirs"] = list(dict.fromkeys(extra_dirs))
+cfg = {
+    "skills": {
+        "load": {
+            "extraDirs": [managed_skills_dir],
+        }
+    }
+}
 
 out_path.parent.mkdir(parents=True, exist_ok=True)
 with out_path.open("w") as f:
-    json.dump(merged, f, indent=2)
+    json.dump(cfg, f, indent=2)
     f.write("\n")
 PY
 }

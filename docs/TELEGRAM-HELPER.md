@@ -8,14 +8,13 @@ In Telegram, open [@BotFather](https://t.me/BotFather), send `/newbot`, and fini
 
 ## Register channel and bind an agent
 
-Set `BOT_NAME` and `BOT_ACCOUNT` to match the bot you created (display name and `@username` without `@`). Agent ids match `agents/*/` in this repo. To use the legacy agent instead of the default, comment the first `export` and uncomment the second.
+Set `BOT_NAME` and `BOT_ACCOUNT` to match the bot you created (display name and `@username` without `@`). Agent ids match `agents/*/` in this repo.
 
 ```bash
 export TELEGRAM_BOT_TOKEN='your-token-here'
 
-# Uncomment the agent you want to register
+# Example: bind the core screener (adjust name/account to your bot)
 # export AGENT_ID='mv-core-screener' BOT_NAME='MESSY Token Screener' BOT_ACCOUNT='mv_token_screener_bot'
-# export AGENT_ID='mv-t1-mngr' BOT_NAME='MV Team 1 Manager' BOT_ACCOUNT='mv_t1_mngr_bot'
 
 openclaw channels add --channel telegram --account "$BOT_ACCOUNT" --name "$BOT_NAME" --token "$TELEGRAM_BOT_TOKEN"
 openclaw agents bind --agent "$AGENT_ID" --bind telegram

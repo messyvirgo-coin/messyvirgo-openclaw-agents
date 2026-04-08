@@ -65,7 +65,7 @@ Good: Strong momentum candidate: Relative Strength is very high (85.78) and Perf
 ## Result Contract
 
 - `create_fund_screen_run` persists one immutable API run plus related candidates.
-- API/MCP candidate payloads require `token_id`, `rank`, and `candidate_reason`. Keep `chain` and `contract_address` when available for traceability, but do not use them instead of `token_id`.
+- API candidate payloads require `token_id`, `rank`, and `candidate_reason`. Keep `chain` and `contract_address` when available for traceability, but do not use them instead of `token_id`.
 - Local artifacts following `SCREEN_RESULT.schema.json` also require `source_run_ids` per candidate.
 - Run status enum: `executed` | `skipped_missing_input` | `skipped_condition_false` | `failed_validation` | `failed_error`
 - Run scope enum: `universe` | `holdings`

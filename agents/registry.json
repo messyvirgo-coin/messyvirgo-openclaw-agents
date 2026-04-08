@@ -34,50 +34,7 @@
           "agents_list",
           "image",
           "tavily_search",
-          "tavily_extract",
-          "messy-virgo-funds__*"
-        ]
-      },
-      "skills": [
-        "mv-screening-configuration",
-        "mv-screening-execution"
-      ],
-      "heartbeat": {
-        "every": "0m"
-      }
-    },
-    {
-      "id": "mv-t1-mngr",
-      "name": "Messy Virgo T1 Manager",
-      "identity": { "name": "Messy Virgo T1 Manager" },
-      "workspace": "~/.openclaw/workspaces/mv-t1-mngr",
-      "tools": {
-        "allow": [
-          "exec",
-          "cron",
-          "process",
-          "code_execution",
-          "read",
-          "write",
-          "edit",
-          "apply_patch",
-          "sessions_list",
-          "sessions_history",
-          "sessions_send",
-          "sessions_spawn",
-          "sessions_yield",
-          "subagents",
-          "session_status",
-          "memory_search",
-          "memory_get",
-          "web_search",
-          "x_search",
-          "web_fetch",
-          "agents_list",
-          "image",
-          "tavily_search",
-          "tavily_extract",
-          "messy-virgo-funds__*"
+          "tavily_extract"
         ]
       },
       "skills": [

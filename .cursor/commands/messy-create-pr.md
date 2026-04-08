@@ -64,9 +64,9 @@
    - Count total files changed
    - If ≤ 10 files: List all files with their status (e.g., "Modified: scripts/install.sh")
    - If > 10 files: Group by top-level directory/package and summarize:
-     - Count files per directory (e.g., "agents/: 12 files, runtime/: 3 files")
+     - Count files per directory (e.g., "agents/: 12 files, scripts/: 2 files")
      - List key files only (e.g., scripts, agent definitions, bundles, docs)
-   - Identify affected areas: `agents/`, `bundles/`, `runtime/`, `scripts/`, `.cursor/commands/`, `docs/`, etc.
+   - Identify affected areas: `agents/`, `bundles/`, `scripts/`, `.cursor/commands/`, `docs/`, etc.
 3. Use this information to inform PR description sections
 
 ## Resolve GitHub Issue (if issue number found)
@@ -182,7 +182,7 @@ Format: `{prefix}: {Description} (#{GitHub-Issue})` (GitHub issue number optiona
      4. `pytest -v` (only if installed and Python tests exist)
    - If no test runner is configured, run baseline verification for this repo:
      - `bash -n scripts/*.sh`
-     - `jq empty agents/registry.json bundles/*.json runtime/*.json runtime/config-fragments/*.json`
+     - `jq empty agents/registry.json bundles/*.json`
    - Verify every executed command exits with code 0.
 
 2. **Handle verification failures**:

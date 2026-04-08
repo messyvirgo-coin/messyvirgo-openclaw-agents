@@ -1,7 +1,0 @@
-{
-  "name": "mv-t1",
-  "description": "Legacy Team 1 bundle (mv-t1-mngr only). Prefer bundle mv-core for new installs; this bundle will be removed.",
-  "agents": [
-    "mv-t1-mngr"
-  ]
-}
