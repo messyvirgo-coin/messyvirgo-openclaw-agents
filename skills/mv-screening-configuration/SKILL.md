@@ -1,52 +1,66 @@
 ---
 name: mv-screening-configuration
-description: Use when inspecting or changing a Messy Virgo fund sleeve's screening context, including custom queries, workflow steps, or instructions.
+description: Use when inspecting or replacing a Messy Virgo sleeve screening context (custom queries, workflow steps, instructions), when context replace validation fails, or when workflow step ids drift from custom_queries.query_id.
 ---
 
 # Screening Configuration
 
 ## Overview
 
-This skill is context-first. **Sleeve screening context** (`fund_sleeves.meta.screening`) is canonical and includes `custom_queries`, an ordered `workflow` (`template` / `query` steps), and freeform `instructions`.
+`screening context get` is the editable source of truth. Saving is always a full replace.
 
-## When to Use
+Out of scope: immutable screen runs (`runs create`) — use **mv-screening-execution**.
 
-- The user wants to inspect the current screening setup for one fund **sleeve**.
-- The user wants to change what future screening runs will do for that sleeve.
-- The user wants to add, update, or remove a saved custom query for one sleeve.
-- The user wants to pull one sleeve's workflow into a local file, edit it, and push it back.
+## Discover
 
-## Prerequisites
+```bash
+mv screening context --help
+mv screening templates --help
+mv screening kpis --help
+mv screening scores --help
+mv screening context replace --example
+mv screening context replace --schema
+mv screening screen --example
+mv screening screen --schema
+```
 
-- The exact `fund_id` and **`sleeve_id`** must be explicit before doing sleeve-specific configuration work. Use `list_fund_sleeves(fund_id)` when the sleeve id is unknown.
-- Do not guess the fund or sleeve from a name, nickname, prior example, or fallback lookup.
+## Required IDs
 
-## Core Workflow
+- Require explicit `fund_id` and `sleeve_id`.
+- If `sleeve_id` is unknown, run `mv funds sleeves list <fund_id> --json`.
+- If both ids are already explicit, do not re-derive them.
 
-1. Read the current state first with `get_sleeve_screening_context(fund_id, sleeve_id)`.
-2. Decide whether the change affects `custom_queries`, `workflow.steps`, `instructions`, or all three.
-3. When saving, send a **full replace** payload through `replace_sleeve_screening_context`: `request.custom_queries`, `request.workflow`, and `request.instructions` are all required.
-4. Re-read with `get_sleeve_screening_context` to confirm the saved context matches what was intended.
+## Workflow
 
-## Quick Reference
+1. `mv screening context get <fund_id> <sleeve_id> --json`
+2. Inspect supporting definitions as needed:
+   - `mv screening templates list --json`
+   - `mv screening templates get <template_id> --json`
+   - `mv screening catalog --json`
+   - `mv screening kpis list --json`
+   - `mv screening scores list --json`
+3. Before drafting JSON files, inspect payload contracts:
+   - `mv screening screen --example`
+   - `mv screening screen --schema`
+   - `mv screening context replace --example`
+   - `mv screening context replace --schema`
+4. Draft and test any new request: `mv screening screen <fund_id> <sleeve_id> --scope <holdings|universe> --file <request.json> --json`
+5. `mv screening context replace <fund_id> <sleeve_id> --file <context.json> --json`
+6. `mv screening context get <fund_id> <sleeve_id> --json` — confirm the persisted state.
 
-| Task | Action |
-| ------ | ---------- |
-| Inspect current setup | Call `get_sleeve_screening_context(fund_id, sleeve_id)` first. This returns templates, `custom_queries`, `workflow`, and `instructions`. |
-| Inspect template library | Use `mv://screening-templates` or `mv://screening-templates/{template_id}`. Templates are curated and read-only. |
-| Inspect screening catalog | Indicator catalog: **`mv://token-dd/indicator-catalog`**. For screening-filtered KPI/score definitions: **`mv://token-dd/screening/kpis`** and **`mv://token-dd/screening/scores`**. Unfiltered KPI/score lists: **`mv://token-dd/kpis`** and **`mv://token-dd/scores`**. |
-| Test a custom query | Read `mv://token-dd/indicator-catalog`, then call `screen_sleeve_tokens` with flat args: `fund_id`, **`sleeve_id`**, `scope`, optional `snapshot_date`, `filters`, `order_by`, `fields`, and `limit`. Set `limit` to the user-specified top-N or **20** if not specified; **never use more than 20** for a custom query. |
-| Save context | Choose a descriptive `query_id` such as `high-momentum-liquid`. In `custom_queries`, use `query_id` as the identifier field, not `id`. For `workflow.steps`, `kind: "query"` steps must reference that same `query_id` in `step.id`. Build the nested `request` payload with `custom_queries`, `workflow`, and `instructions`, then call `replace_sleeve_screening_context`. Keep authored `request.limit` at or below **20**. If the tool returns an error, report it verbatim and fix the payload shape rather than inventing fallback ids or selectors. |
+## Payload Rules
+
+- `screening context replace` takes one JSON file with top-level `custom_queries`, `workflow`, and `instructions`.
+- `custom_queries[].query_id` is the saved query identifier. Never use `id` there.
+- `workflow.steps[]` uses `kind: "template" | "query"` plus raw `id`. For custom-query steps, `step.id` must equal the saved `query_id`.
+- `custom_queries[].request` is the nested screen request object. Do not wrap the whole save payload in `request`.
+- Keep authored custom-query `request.limit` at or below `20`.
 
 ## Common Mistakes
 
-- Trying to configure a sleeve before the exact `fund_id` and `sleeve_id` are explicit.
-- Saving a draft query without persisting the full context through `replace_sleeve_screening_context`.
-- Using `limit` above **20** on a custom query (platform may cap or warn; keep the authored request at or below 20).
-- Updating `custom_queries` without updating `workflow` references (or vice versa).
+- Saving only the changed query instead of the full context file.
+- Updating `custom_queries` without updating `workflow.steps` references (or vice versa).
 - Using `id` inside `custom_queries` instead of `query_id`.
-- Forgetting that `replace_sleeve_screening_context` expects a nested `request` object.
-- Inventing `template:<id>` or `query:<id>` references instead of resolving real ids.
-- Retrying validation failures with made-up selector names or operators.
+- Inventing template ids, query ids, fields, operators, or wrapper objects after a validation failure — fix the payload from the actual error.
 
-`mv-screening-execution` runs the canonical sleeve context and persists immutable screen runs. This skill changes future behavior by editing the sleeve context.
+`mv-screening-execution` runs the saved workflow and persists immutable screen runs. This skill changes future behavior by editing the saved sleeve context.

@@ -7,7 +7,7 @@ Install, update, and remove Messy Virgo pack files into an existing OpenClaw lay
 - **Config / state:** `OPENCLAW_CONFIG_DIR` or `~/.openclaw`
 - **Agent workspaces:** `OPENCLAW_WORKSPACES_DIR` or `~/.openclaw/workspaces`
 
-Set these in the environment or in a repo-root `.env` (the scripts source `.env` automatically). See [`.env.example`](../.env.example).
+Set these in the environment or in a repo-root `.env` (the scripts source `.env` automatically). Optional: `MV_API_URL` and `MV_API_KEY` for the Messy Virgo CLI; see the [README](../README.md).
 
 Agents use the Messy Virgo HTTP API via the **`mv`** CLI; install and auth are covered in the [README](../README.md).
 

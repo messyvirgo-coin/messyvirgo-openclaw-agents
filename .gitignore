@@ -2,7 +2,7 @@
 *.log
 *.tmp
 
-# Local env (secrets); use .env.example as template
+# Local env (secrets)
 .env
 
 # macOS/Linux noise

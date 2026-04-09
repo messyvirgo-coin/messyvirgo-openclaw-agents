@@ -9,3 +9,11 @@ Covers:
 - sleeve screening execution
 - screening run persistence
 - screening result explanation
+
+Files in this pack:
+
+1. `soul.json`
+2. `IDENTITY.md`
+3. `SOUL.md`
+4. `AGENTS.md`
+5. `MEMORY.md`

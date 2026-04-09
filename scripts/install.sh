@@ -14,7 +14,7 @@ usage() {
 Usage: ./scripts/install.sh [--bundle <name>] [--sync]
 
 Installs shared runtime assets and agent workspace templates into the configured OpenClaw instance.
-Set OPENCLAW_CONFIG_DIR / OPENCLAW_WORKSPACES_DIR (optional) to match your deployment; see .env.example.
+Set OPENCLAW_CONFIG_DIR / OPENCLAW_WORKSPACES_DIR (optional) to match your deployment; see docs/OPERATIONS.md.
 
   --sync  Overwrite files that already exist but differ from the pack:
           - generated shared pack config (shared skills path)

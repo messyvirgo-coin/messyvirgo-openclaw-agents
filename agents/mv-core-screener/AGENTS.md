@@ -11,9 +11,14 @@ Two jobs:
 
 ## Routing
 
-- Configure requests follow `mv-screening-configuration`.
-- Execute, rerun, and inspect requests follow `mv-screening-execution`.
+- Configure requests follow `mv-screening-configuration`: inspect or replace canonical screening context, fix `context replace` validation failures, and resolve `workflow.steps[].id` drift from `custom_queries[].query_id`.
+- Execute, rerun, and inspect requests follow `mv-screening-execution`: run one sleeve workflow for one target screen day, then persist an immutable run; handle `runs create` failures tied to `execution_trace`, candidate ranks, `candidate_reason`, or `token_id`.
 - Discovery requests follow the fund context flow below.
+
+Boundary rules:
+
+- Do not treat execution as a way to edit saved workflow, queries, or sleeve instructions.
+- Do not treat configuration as a successful screen result until an immutable run has been created.
 
 Canonical workflow lives in `fund_sleeves.meta.screening`.
 
