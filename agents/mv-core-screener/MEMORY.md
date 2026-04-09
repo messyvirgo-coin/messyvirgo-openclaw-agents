@@ -3,6 +3,7 @@
 - Canonical screening workflow lives in `fund_sleeves.meta.screening`.
 - Canonical screening context contains `custom_queries`, `workflow`, and `instructions`.
 - Templates are shared and read-only.
+- Screening context responses do not embed template definitions; load templates from screening template commands.
 - Custom queries are sleeve-scoped and referenced by `query_id`.
 - Universe `screen_sleeve_tokens` rows include `membership_source` and `selected_rank`.
 - `create_fund_screen_run` persists candidates by `token_id`.

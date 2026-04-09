@@ -7,7 +7,7 @@ description: Use when inspecting or replacing a Messy Virgo sleeve screening con
 
 ## Overview
 
-`screening context get` is the editable source of truth. Saving is always a full replace.
+`screening context get` is the editable source of truth for sleeve-owned state. It returns `custom_queries`, `workflow`, `instructions`, and `warnings`; load shared template definitions separately from `mv screening templates ...`. Saving is always a full replace.
 
 Out of scope: immutable screen runs (`runs create`) — use **mv-screening-execution**.
 

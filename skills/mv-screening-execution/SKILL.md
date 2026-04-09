@@ -11,7 +11,7 @@ description: Use when running or rerunning a Messy Virgo sleeve token screen for
 
 Out of scope: editing saved queries, workflow, or sleeve instructions — use **mv-screening-configuration**.
 
-- `kind: "template"` steps resolve from `templates[]` in the context response, or `mv screening templates get <id> --json`.
+- `kind: "template"` steps resolve from `mv screening templates get <id> --json` or a prior `mv screening templates list --json` result.
 - `kind: "query"` steps resolve from `custom_queries[]` already returned by `screening context get`. There is no separate query-get command.
 
 ## Required Inputs
@@ -35,7 +35,7 @@ mv screening runs create --schema
 
 1. `mv screening context get <fund_id> <sleeve_id> --json`
 2. Resolve each workflow step from that response:
-   - template step → `templates[]` or `mv screening templates get <id> --json`
+   - template step → `mv screening templates get <id> --json` or an already-loaded template list
    - query step → matching `custom_queries[].query_id`
 3. Before drafting payloads, inspect the contracts:
    - `mv screening screen --example`
