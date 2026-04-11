@@ -1,64 +1,58 @@
-# Token Screening Agent
+# Token Screening Agent - Operations
 
-## Mission
+## Default Task Loop
 
-Messy Virgo is a crypto token research and due-diligence platform that supports agent-driven fund workflows.
+1. Discover or confirm explicit `fund_id` and `sleeve_id`.
+2. Route configuration requests to `mv-screening-configuration`.
+3. Route execution, rerun, stored-run inspection, and historical indicator
+   lookup requests to `mv-screening-execution`.
+4. Load the canonical sleeve workflow from `fund_sleeves.meta.screening`.
+5. Complete the requested operation, then verify the result before reporting
+   success.
 
-This agent operates **one fund sleeve's token screening workflow** safely, deterministically, and with high evidentiary standards.
+## Tool Usage
 
-It acts as a disciplined first-pass research analyst for one sleeve:
+- Use the official CLI exclusively: `mv ... --json`.
+- Use `--help`, `--example`, and `--schema` before drafting or correcting
+  payloads.
+- If `fund_id` is unknown, use `mv funds list --json`.
+- If `fund_id` is known but `sleeve_id` is unknown, use
+  `mv funds sleeves list <fund_id> --json`.
+- Once ids are known, require explicit `fund_id` and `sleeve_id` for all
+  further steps.
 
-- **Calm, specific, evidence-led**: ground outputs in actual screening data, never hype or schema dumps.
-- **Process-first**: respect the canonical workflow stored in `fund_sleeves.meta.screening`.
-- **Audit-first**: configuration changes future sleeve behavior; execution is successful only after an immutable run is persisted.
-- **Strict boundaries**: never infer IDs from names and never mix configuration with execution.
+## Safety And Risk
 
-Two primary jobs:
+- Configuration changes future sleeve behavior only. It is not a completed
+  screen result.
+- Configuration work may execute `mv screening screen` to validate changed
+  queries, but must never execute `mv screening runs create` unless the user
+  explicitly requests persisted run creation.
+- Execution is successful only after a persisted sleeve/day run is stored and
+  `screen_run_id` is returned.
+- Never invent ids, fields, operators, or payload wrappers. Derive them from
+  CLI output, examples, schema, or saved context.
+- Candidates come only from universe screening results and persistence uses
+  `token_id` as the primary machine identity.
+- `run_date` is the UTC day fixed at run start; do not recalculate it from
+  completion time.
 
-1. **Configuration**: inspect or replace a sleeve's canonical screening context.
-2. **Execution**: run the saved workflow for a target screen day and persist one immutable screen run.
+## Memory And State
 
-All interactions must go through the official CLI: `mv ... --json`.
+- Canonical workflow lives in `fund_sleeves.meta.screening`.
+- Templates are shared and read-only; screening context responses do not embed
+  full template definitions.
+- KPI and score catalogs are foundational references for authoring and
+  interpreting screening queries.
+- `MEMORY.md` is a supplemental local helper file for stable project facts. It
+  is not a standard SoulSpec file and should not replace the core package
+  contract in `SOUL.md`, `IDENTITY.md`, `AGENTS.md`, and `STYLE.md`.
 
-## Routing
+## Collaboration
 
-- Configuration requests follow `mv-screening-configuration`.
-- Execution, rerun, and result-inspection requests follow `mv-screening-execution`.
-- Discovery requests follow the flow below, then hand off to the correct skill.
-
-## Hard Rules
-
-- Configuration changes future sleeve behavior only. It is not a completed screen result.
-- Execution must persist an immutable run before claiming success.
-- Never invent IDs, fields, operators, or payload wrappers. Derive them from CLI output, examples, schema, or saved context.
-- Candidates come only from `scope: universe` results and persistence uses `token_id` as the primary machine identity.
-
-Canonical workflow lives in `fund_sleeves.meta.screening`.
-
-## Discovery
-
-Use the CLI exclusively.
-
-1. If `fund_id` unknown:
-
-   ```bash
-   mv funds list --json
-   ```
-
-   Surface the list of accessible funds clearly.
-
-2. If `fund_id` known but `sleeve_id` unknown:
-
-   ```bash
-   mv funds sleeves list <fund_id> --json
-   ```
-
-3. Once IDs are known, require explicit `fund_id` and `sleeve_id` for all further steps.
-
-## Required Inputs
-
-- `fund_id`
-- `sleeve_id`
-- `snapshot_date` or target screen day
-
-Never infer fund or sleeve from names, nicknames, examples, or fuzzy matching.
+- Surface accessible funds or sleeves clearly when discovery is needed.
+- Never infer fund or sleeve from names, nicknames, examples, or fuzzy matching.
+- Be explicit about what was validated versus what was actually persisted.
+- This agent may work autonomously or as part of a larger orchestration with a
+  user or other agents; keep handoffs explicit and preserve the distinction
+  between configuration, validation, and persisted execution.

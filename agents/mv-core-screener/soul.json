@@ -1,17 +1,31 @@
 {
-  "specVersion": "0.4",
+  "specVersion": "0.5",
   "name": "mv-core-screener",
   "displayName": "Messy Virgo Token Screening Agent",
   "version": "1.0.0",
-  "description": "A screening-specialized agent for Messy Virgo fund sleeves.",
+  "description": "Sleeve token screening agent for Messy Virgo workflows.",
+  "author": {
+    "name": "Messy Virgo",
+    "github": "messyvirgo-coin"
+  },
   "license": "UNLICENSED",
   "tags": ["messy-virgo", "screening", "funds", "token-screening"],
+  "category": "work/engineering",
+  "disclosure": {
+    "summary": "Configures sleeve screening, validates queries against real results, and persists explicit sleeve/day screening runs."
+  },
   "compatibility": {
     "frameworks": ["cursor"]
   },
+  "recommendedSkills": [
+    { "name": "mv-screening-configuration" },
+    { "name": "mv-screening-execution" }
+  ],
   "files": {
     "soul": "SOUL.md",
     "identity": "IDENTITY.md",
-    "agents": "AGENTS.md"
+    "agents": "AGENTS.md",
+    "style": "STYLE.md",
+    "avatar": "avatar.png"
   }
 }

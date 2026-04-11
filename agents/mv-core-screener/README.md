@@ -16,4 +16,6 @@ Files in this pack:
 2. `IDENTITY.md`
 3. `SOUL.md`
 4. `AGENTS.md`
-5. `MEMORY.md`
+5. `STYLE.md`
+6. `avatar.png` (packaged avatar image)
+7. `MEMORY.md` (supplemental local helper file for stable project facts)
