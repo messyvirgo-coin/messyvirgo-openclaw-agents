@@ -71,3 +71,7 @@ See [SECURITY.md](./SECURITY.md).
 ## Support
 
 See [SUPPORT.md](./SUPPORT.md).
+
+## Disclaimer
+
+⚠️ This is experimental software for educational and research purposes only. Trading involves significant risk of loss. If you decide to use any of this software in a trading context, you do this 100% at your own risk. Trade with capital you can afford to lose. Past performance does not guarantee future results. This software is not financial advice. The authors are not responsible for any financial losses resulting from the use of this software.
