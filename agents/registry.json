@@ -39,7 +39,9 @@
       },
       "skills": [
         "mv-screening-configuration",
-        "mv-screening-execution"
+        "mv-screening-execution",
+        "mv-context-macros",
+        "mv-context-narratives"
       ],
       "heartbeat": {
         "every": "0m"
