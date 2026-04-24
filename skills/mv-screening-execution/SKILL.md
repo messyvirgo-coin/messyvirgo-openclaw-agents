@@ -1,88 +1,77 @@
 ---
 name: mv-screening-execution
-description: Use when running or rerunning a Messy Virgo sleeve token screen for one fund and sleeve, when persisting a sleeve/day screening run with run_date, or when inspecting stored runs or historical indicator details.
+description: "Use when handling Messy Virgo Funds / MVF screening requests for mvf-* funds or mvs-* sleeves: last/latest screen run, only sleeve, top N token candidates, shortlist candidates, run/rerun screening, persist sleeve/day runs, rebuild aggregates, or inspect run/indicator details."
 ---
 
 # Screening Execution
 
 ## Overview
 
-`screening context get` is the source of truth for the workflow. Persist one sleeve/day run row with `screening runs create` before reporting success.
+This skill runs or inspects screening outcomes. It never edits saved screening context; use **mv-screening-configuration** for context changes.
 
-Out of scope: editing saved queries, workflow, or sleeve instructions — use **mv-screening-configuration**.
+Run/rerun tasks persist one single-day sleeve run with `mv screening runs create`. If aggregation is enabled, rebuild the same-sleeve aggregate run after persistence. Inspect-only tasks such as "last screen run" or "top 3 candidates" use list/get commands and create no rows.
 
-- `kind: "template"` steps resolve from `mv screening templates get <id> --json` or a prior `mv screening templates list --json` result.
-- `kind: "query"` steps resolve from `custom_queries[]` already returned by `screening context get`. There is no separate query-get command.
-
-## Required Inputs
-
-- Require explicit `fund_id` and `sleeve_id`.
-- If `sleeve_id` is unknown, run `mv funds sleeves list <fund_id> --json`.
-- Set `run_date` once at run start using UTC date and keep it fixed through the run.
-- Do not invent a historical `snapshot_date` for ordinary "screen now" flows.
-- If you need explicit freshness visibility before screening, call:
-  - `mv screening snapshot get <fund_id> <sleeve_id> --json`
-
-## Discover
+## Commands
 
 ```bash
-mv screening --help
-mv screening runs --help
-mv screening templates --help
-mv screening screen --example
-mv screening screen --schema
-mv screening runs create --example
-mv screening runs create --schema
+mv funds sleeves list <fund_id> --json
+mv screening context get <fund_id> <sleeve_id> --json
+mv screening snapshot get <fund_id> <sleeve_id> --json
+mv screening templates get <template_id> --json
+mv screening screen <fund_id> <sleeve_id> --file <request.json> --json
+mv screening runs create <fund_id> --file <payload.json> --json
+mv screening runs list <fund_id> [--sleeve-id <sleeve_id>] --json
+mv screening runs get <fund_id> <screen_run_id> --json
+mv screening aggregation get <fund_id> <sleeve_id> --json
+mv screening aggregation rebuild <fund_id> <sleeve_id> --as-of-date <run_date> --json
+mv screening aggregation runs list <fund_id> [--sleeve-id <sleeve_id>] --json
+mv screening aggregation runs latest <fund_id> <sleeve_id> --json
+mv screening indicators get <fund_id> --snapshot-date <YYYY-MM-DD> --chain <chain> --contract-address <address> --json
 ```
 
-## Workflow
+## Inspect Workflow
 
-1. `mv screening context get <fund_id> <sleeve_id> --json`
-2. Resolve each workflow step from that response:
-   - template step → `mv screening templates get <id> --json` or an already-loaded template list
-   - query step → matching `custom_queries[].query_id`
-3. Before drafting payloads, inspect the contracts:
-   - `mv screening screen --example`
-   - `mv screening screen --schema`
-   - `mv screening runs create --example`
-   - `mv screening runs create --schema`
-4. Freshness check before each step:
-   - `mv screening snapshot get <fund_id> <sleeve_id> --json`
-5. Execute each valid step: `mv screening screen <fund_id> <sleeve_id> --file <request.json> --json`
-   - If request JSON omits `snapshot_date`, screening targets today's UTC date.
-   - Readiness is based on completed `token_universe_runs` for the sleeve universe/date.
-   - If today's snapshot is not ready, API returns `SNAPSHOT_NOT_READY` (409); do not treat that as an empty-result success.
-   - Completed runs may still produce partial row coverage when some tokens fail; this does not invalidate screening.
-   - Capture the `snapshot_date` returned by each screen response.
-   - Also capture `universe_run` and `coverage` from the screen response. When `results` is empty, use these fields to distinguish "no joined indicator rows" (`indicator_rows_joined=0`) vs "filters removed all rows" (`rows_after_filters=0` with `indicator_rows_joined>0`), and reference the counters in narrative/meta.
-6. Record `ref`, `status`, `intent`, and `resolved_request`. Missing refs → `failed_validation`; missing runtime inputs → `skipped_missing_input`; command errors → `failed_error`.
-7. Build candidates from executed screening rows using ranked evidence and clear `candidate_reason` text.
-8. Build run payload with explicit `run_date` (UTC day from run start), `snapshot_date`, and shortlist candidates.
-9. `mv screening runs create <fund_id> --file <payload.json> --json` — success requires a returned `screen_run_id`.
-10. Confirm if needed:
+Use this workflow for requests that ask for existing results, latest/last screen runs, top N candidates, shortlist candidates, or candidate details without asking to run/rerun screening.
 
-- latest persisted row: `mv screening runs get <fund_id> <screen_run_id> --json`
-- history listing (complementary): `mv screening runs list <fund_id> --sleeve-id <sleeve_id> --json`
-- historical indicator lookup (complementary): `mv screening indicators get <fund_id> --snapshot-date <YYYY-MM-DD> --chain <chain> --contract-address <address> --json`
+1. Require explicit `fund_id`.
+2. If `sleeve_id` is unknown, run `mv funds sleeves list <fund_id> --json`.
+3. If exactly one sleeve is returned, use it without asking. If multiple sleeves are returned and the prompt does not identify one, ask which sleeve to inspect.
+4. List persisted runs with `mv screening runs list <fund_id> --sleeve-id <sleeve_id> --json`.
+5. Select the latest run from the list response. If ordering is unclear, sort by `run_date` then `screened_at` descending.
+6. If the selected run lacks full `candidates[]`, fetch it with `mv screening runs get <fund_id> <screen_run_id> --json`.
+7. Return candidates sorted by persisted `rank`; for "top N" requests, return only the first N.
+8. Do not call `mv screening screen`, `mv screening runs create`, or aggregation rebuild commands during inspect-only work.
+
+## Run Workflow
+
+1. Require explicit `fund_id`; if `sleeve_id` is unknown, run `mv funds sleeves list <fund_id> --json`.
+2. Set `run_date` once at run start using the UTC date; do not recalculate it at completion time.
+3. Load `mv screening context get`; resolve template steps from `mv screening templates get <id> --json` or a loaded template list, and query steps from matching `custom_queries[].query_id`.
+4. Inspect `screen --example|--schema` and `runs create --example|--schema` before drafting payload files.
+5. Check readiness with `mv screening snapshot get`; `SNAPSHOT_NOT_READY` is not an empty-result success.
+6. Execute valid steps with `mv screening screen`; capture returned `snapshot_date`, `coverage`, and `universe_run`.
+7. Build ranked candidates with clear `candidate_reason` text and evidence from returned rows.
+8. Create the single-day run; success requires a returned `screen_run_id`.
+9. If `mv screening aggregation get` returns `enabled: true`, run aggregation rebuild for the same `run_date`.
+10. Report single-day and aggregate outcomes separately; aggregate failure does not invalidate a saved single-day run.
 
 ## Persistence Rules
 
-- Payload needs `sleeve_id`, `run_date`, `process_narrative`, structured `execution_trace`, `run_catalog`, and candidate rows with `token_id`, `rank`, and `candidate_reason`.
-- `run_date` is the UTC day fixed at run start (business key with `sleeve_id`); do not recalculate at completion time.
-- Persist the resolved screen response `snapshot_date` in the run payload; do not substitute `screened_at`.
-- For empty-result runs, include the screen response `coverage`/`universe_run` evidence in `process_narrative` and/or payload `meta` so users can see whether data was unavailable or filtered out.
-- `execution_trace` must be JSON-shaped (dict or list, not plain text).
+- Run payload needs `sleeve_id`, `run_date`, `process_narrative`, JSON-shaped `execution_trace`, `run_catalog`, and candidates with `token_id`, `rank`, `candidate_reason`.
+- Persist the screen response `snapshot_date`; do not substitute `screened_at`.
 - Candidate ranks must be unique and within `1..10`.
-- `candidate_reason`: name the 1–3 most relevant DD indicators with actual scores, explain why they matter for this sleeve, state why the token is worth follow-up. Use full indicator names (`Relative Strength` not `RS`). Never put a raw `token_id` in user-facing prose.
-- For transient failures: retry the same payload once, then report the error.
+- `candidate_reason` should name 1-3 indicators with scores, use full names, and avoid raw `token_id` in prose.
+- Empty-result runs should include `coverage`/`universe_run` evidence to distinguish missing indicator rows from filters removing all rows.
+- Do not invent an aggregate policy at execution time; use the saved aggregation context.
 
 ## Common Mistakes
 
-- Looking for a nonexistent query-get command instead of using `custom_queries[]` from context.
-- Writing malformed JSON files for `screen` or `runs create`.
-- Omitting `run_date` or setting it from finish time instead of run-start UTC day.
-- Using `chain` or `contract_address` as machine identity when persistence expects `token_id`.
-- Reporting success before `runs create` returns a `screen_run_id`.
-- Dropping all candidates after one partial validation failure — strip the invalid rows, re-rank, and persist the remainder.
+- Reporting execution success before `runs create` returns `screen_run_id`.
+- Recomputing `run_date` after a long run crosses UTC midnight.
+- Looking for a nonexistent custom-query get command instead of using `custom_queries[]`.
+- Persisting `chain` or `contract_address` where the run payload expects `token_id`.
+- Forgetting aggregate rebuild after a successful single-day run when aggregation is enabled.
+- Querying the database directly for run history instead of using CLI list/get commands.
+- Inferring narrative backdrop for a candidate from symbol alone when the persisted screening row already includes `token_id` - use that `token_id` with `mv tokens get` / `mv tokens resolve` instead of guessing from the ticker.
 
 `mv-screening-configuration` changes what future runs execute; this skill records one completed sleeve/day run and can optionally inspect run/indicator history.

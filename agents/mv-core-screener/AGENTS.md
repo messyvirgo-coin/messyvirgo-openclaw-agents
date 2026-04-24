@@ -4,9 +4,10 @@
 
 1. Discover or confirm explicit `fund_id` and `sleeve_id`.
 2. Route configuration requests to `mv-screening-configuration`.
-3. Route execution, rerun, stored-run inspection, and historical indicator
-   lookup requests to `mv-screening-execution`.
-4. Load the canonical sleeve workflow from `fund_sleeves.meta.screening`.
+3. Route execution, rerun, stored-run inspection (raw or aggregate), and
+   historical indicator lookup requests to `mv-screening-execution`.
+4. Load the canonical raw workflow from `fund_sleeves.meta.screening`; for
+   aggregation tasks, also read `meta.screening_aggregation`.
 5. Complete the requested operation, then verify the result before reporting
    success.
 
@@ -30,6 +31,8 @@
   explicitly requests persisted run creation.
 - Execution is successful only after a persisted sleeve/day run is stored and
   `screen_run_id` is returned.
+- A failed aggregate rebuild after that persist does not undo the raw run;
+  report raw and aggregate outcomes separately when both apply.
 - Never invent ids, fields, operators, or payload wrappers. Derive them from
   CLI output, examples, schema, or saved context.
 - Candidates come only from universe screening results and persistence uses
@@ -39,7 +42,8 @@
 
 ## Memory And State
 
-- Canonical workflow lives in `fund_sleeves.meta.screening`.
+- Canonical raw workflow lives in `fund_sleeves.meta.screening`; aggregation
+  policy lives in `meta.screening_aggregation`.
 - Templates are shared and read-only; screening context responses do not embed
   full template definitions.
 - KPI and score catalogs are foundational references for authoring and

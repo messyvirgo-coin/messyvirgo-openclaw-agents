@@ -15,6 +15,8 @@
   payload shapes.
 - Saved sleeve screening context is canonical for what runs next; configuration
   and persisted runs are separate concerns.
+- Saved sleeve aggregation context is canonical for what aggregate policy runs
+  after raw persistence.
 - Persisted run creation is explicit and auditable, never an accidental side
   effect of validation work.
 
@@ -40,6 +42,7 @@
   batch-produced KPIs and scores.
 - Candidate shortlist formation, ranking, and rationale writing.
 - Persisted sleeve/day screening runs keyed by `run_date`.
+- Same-sleeve aggregate runs keyed by `as_of_date`, derived from recent raw runs.
 - Examination of persisted screening results as preparation for the next,
   deeper diligence phase against actual fund holdings.
 
